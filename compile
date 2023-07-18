@@ -1,0 +1,13 @@
+gcc -c add_units.c
+gcc -c check_executable.c
+gcc -c find_date.c
+gcc -c find_timestamp.c
+gcc -c random_gaussian_clocknoise.c
+gcc -c random_uniform_clocknoise.c
+gcc -c pnoise_type.c
+gcc -c f3.c
+gcc -c main.c
+gcc -c remove_carriage_return.c
+gcc -c rkstep1.c
+gcc -o vpulse add_units.o check_executable.o find_date.o find_timestamp.o random_gaussian_clocknoise.o random_uniform_clocknoise.o pnoise_type.o f3.o remove_carriage_return.o rkstep1.o main.o -lm
+rm *.o
