@@ -11,7 +11,7 @@ double *time_sec, *vpulse, *time_sq, *vout_sq, *vout, prpoint, prtime, TSTART = 
 double tau=EPSILON, tau_noise_bandwidth_sec;
 double noise = 0.0, noise_amp = 0.10, noise_bandwidth_Hz;
 double noise_vthreshold, filtered_noise = 0.0, noise_max = -999.0, noise_min =999.0;
-double freq_Hz, per_sec, ttran_percent, ttran, duty_cycle, pulse_start_time, pulse_end_time, delta_time;
+double freq_Hz, per_sec, ttran_percent, ttran, duty_cycle_percent, pulse_start_time, pulse_end_time, delta_time;
 double errmax = 100.0;
 
 int noise_type = UNIFORM_NOISE;
@@ -66,7 +66,7 @@ printf("\nvpulse v%.2f %s\n\n",VERSION_NUMBER,VERSION_DATE);
 
 if (argc != 9)
 	{
-	printf("Usage with command line:\nvpulse <input_square_wave_freq_hz> <trf_per_cent_period> <duty_cycle> <num_points_per_period> <num_periods>\n");
+	printf("Usage with command line:\nvpulse <input_square_wave_freq_hz> <trf_per_cent_period> <duty_cycle_percent> <num_points_per_period> <num_periods>\n");
 
 	printf("Enter square wave freq (Hz):\n");
 	fgets(pinput_string,LINELENGTH,stdin);
@@ -81,7 +81,7 @@ if (argc != 9)
 	printf("Enter duty cycle (percent of period):\n");
 	fgets(pinput_string,LINELENGTH,stdin);
 	remove_carriage_return(pinput_string);
-	duty_cycle = atol(pinput_string);
+	duty_cycle_percent = atol(pinput_string);
 
 	printf("Enter number of points per period:\n");
 	fgets(pinput_string,LINELENGTH,stdin);
@@ -118,7 +118,7 @@ else
 	ttran_percent = atof(pinput_string);
 
 	strncpy(pinput_string,argv[3],LINELENGTH);
-	duty_cycle = atof(pinput_string);
+	duty_cycle_percent = atof(pinput_string);
 	
 	strncpy(pinput_string,argv[4],LINELENGTH);
 	num_points_per_period = atol(pinput_string);
@@ -146,7 +146,7 @@ else
 printf("Analysis parameters:\n");
 printf("Square wave input frequency = %1.6e Hz\n",freq_Hz);
 printf("Rise/fall time = %.1f %% of period\n",ttran_percent);
-printf("Duty cycle = %.1f %% of period\n",duty_cycle);
+printf("Duty cycle = %.1f %% of period\n",duty_cycle_percent);
 printf("num_points_per_period = %ld\n",num_points_per_period);
 printf("num_periods = %ld\n",num_periods);
 printf("noise_amp = %.2f mV\n",noise_amp/1e-3);
@@ -156,7 +156,7 @@ printf("num_periods_to_plot = %ld\n",num_periods_to_plot);
 	/* Find timestamp to append to filenames */
 
 	find_timestamp(ptimestamp,LINELENGTH);
-	sprintf(pfnameout,"square_wave_%.0fmeg_ttran_%.0f_percent_du_%.0f_noise_amp_%.0fm_noise_bw_%.0fmeg_%s.csv",freq_Hz/1e6,ttran_percent,duty_cycle,noise_amp/1e-03,noise_bandwidth_Hz/1e6,ptimestamp);
+	sprintf(pfnameout,"square_wave_%.0fmeg_ttran_%.0f_percent_du_%.0f_noise_amp_%.0fm_noise_bw_%.0fmeg_%s.csv",freq_Hz/1e6,ttran_percent,duty_cycle_percent,noise_amp/1e-03,noise_bandwidth_Hz/1e6,ptimestamp);
 	printf("Output filename is \"%s\".\n",pfnameout);
 
    /*Set counter to determine number of printed points (time_point_counter), initialize user notification counter k*/
@@ -175,12 +175,12 @@ printf("num_periods_to_plot = %ld\n",num_periods_to_plot);
    freq_Hz = 100e6;
 	per_sec = 1.0/freq_Hz;
 	ttran = (((double) ttran_percent + 0.0)/100.0)*per_sec;
-	pulse_start_time = per_sec/2.0 - ttran;
+	pulse_start_time = ((100.0 - duty_cycle_percent)/100.0)*per_sec - ttran;
 	pulse_end_time = per_sec - ttran;
 	
 	tau_noise_bandwidth_sec = 1.0/(2*pi*noise_bandwidth_Hz);
 	
-	delta_time = per_sec/((double) num_points_per_period);
+	delta_time = per_sec/((double) num_points_per_period - 1);
 	prpoint = delta_time;
 	
 	TSTART = delta_time*( (double) (num_points_per_period*(num_periods - num_periods_to_plot)));
@@ -212,7 +212,7 @@ printf("num_periods_to_plot = %ld\n",num_periods_to_plot);
 		exit(0);
 		}
 	
-	for(i = 0; i < num_points_per_period; i++)
+	for(i = 0; i < (num_points_per_period - 1); i++)
 		time_sec[i] = delta_time*((double) i);
 	
 	for (i = 0;i < num_points_per_period;i++)
@@ -252,7 +252,7 @@ printf("num_periods_to_plot = %ld\n",num_periods_to_plot);
 	
 	for (i = 0; i < num_points_per_period*num_periods; i++)
 		{
-		if (j > (long int) (per_sec/delta_time))
+		if (j > (long int) floor(per_sec/delta_time))
 			j = 0;
 		vout_sq[i] = vpulse[j];
 		time_sq[i] = delta_time*((double) i);
@@ -328,7 +328,7 @@ printf("num_periods_to_plot = %ld\n",num_periods_to_plot);
 
 fclose(fpw1);
 
-sprintf(ptitle_string,"Input %s Square Wave (Du = %.1f %%, trf = %.1f %% of period) and Modulated Noise\nnoise\\_amp = %s, noise bandwidth = %s, sampling frequency = %s",add_units(freq_Hz,2,"Hz",value_string[0]),duty_cycle,ttran_percent,add_units(noise_amp,2,"V",value_string[1]),add_units(noise_bandwidth_Hz,2,"Hz",value_string[2]),add_units(1.0/delta_time,2,"Hz",value_string[3]));
+sprintf(ptitle_string,"Input %s Square Wave (Du = %.1f %%, trf = %.1f %% of period) and Modulated Noise\nnoise\\_amp = %s, noise bandwidth = %s, sampling frequency = %s",add_units(freq_Hz,2,"Hz",value_string[0]),duty_cycle_percent,ttran_percent,add_units(noise_amp,2,"V",value_string[1]),add_units(noise_bandwidth_Hz,2,"Hz",value_string[2]),add_units(1.0/delta_time,2,"Hz",value_string[3]));
 
 sprintf(poctave_command_1,"gnuplot -c ./gnu_plot.gnu \'%s\' \'%s\' \'%s\'\n",pfnameout,ptitle_string,ptimestamp);
 
