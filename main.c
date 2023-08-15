@@ -7,25 +7,48 @@ int main(int argc, char **argv)
 
 /*Define variables*/
 
-double *time_sec, *vpulse, *time_sq, *vout_sq, *vout, prpoint, prtime, TSTART = 0.0;
+double *time_sec, *vsin, *vsin_pm, *vsq, *vout, *pm_noise, *am_noise, *tmp_double_ptr;
+double *vth_cross_rise, *vth_cross_fall, *duty_cycle, mean_du = 0.0;
+double init_phase_rad = 0.0, init_phase_degrees = 0.0;
+double prpoint, prtime, TSTART = 0.0;
 double tau=EPSILON, tau_noise_bandwidth_sec;
-double noise = 0.0, noise_amp = 0.10, noise_bandwidth_Hz;
-double noise_vthreshold, filtered_noise = 0.0, noise_max = -999.0, noise_min =999.0;
-double freq_Hz, per_sec, ttran_percent, ttran, duty_cycle_percent, pulse_start_time, pulse_end_time, delta_time;
+double noise = 0.0, noise_amp = 0.10, unfiltered_noise_amp = 0.0, maximum_delta_noise = 0.0, noise_bandwidth_Hz;
+double noise_vthreshold, filtered_noise = 0.0, last_filtered_noise = 0.0, noise_max = -999.0, noise_min =999.0;
+double freq_Hz, per_sec, ttran_rise_percent, ttran_rise, ttran_fall_percent, ttran_fall;
+double vthreshold, duty_cycle_percent, delta_time;
+
+/* Coefficients to set sinusoid threshold for an input duty cycle */
+
+double coeffi[] = {9.726743609632e-01,4.212749865460e-03,-7.100201979438e-04,4.733679173627e-06};
+
+/* Coefficients to set range of input noise for given input bandwidth to set */
+/* desired filtered output noise (pp) */
+
+double c0 = 2.555552820758e+01, m = 5.757636118011e-01;
 double errmax = 100.0;
 
-int noise_type = UNIFORM_NOISE;
+int noise_type = GAUSSIAN_NOISE;
+int noise_location = ENTERED_NOISE_AMP_IS_FILTERED;
+int modulation_type = AM_MODULATION;
+int end_flag = 0;
 
 unsigned int seed;
 
 long int i, j, k;
-long int num_points_per_period, num_periods, num_periods_to_plot; 
-long int noise_counter = 0, time_point_counter, loopcount;
+long int num_points_per_period, num_periods, num_periods_to_plot, num_crossings;
+long int length_vth_cross_rise = 0, length_vth_cross_fall = 0; 
+long int noise_counter = 0, time_point_counter;
 
 char fnameout[LINELENGTH + 1], *pfnameout;
+char fname_vout[LINELENGTH + 1], *pfname_vout;
+char fnameout_jitter[LINELENGTH + 1], *pfnameout_jitter;
 char line1[LINELENGTH+1], *pline1, *pinput_string, input_string[LINELENGTH + 1];
 
-char noise_type_string[LINELENGTH+1];
+char *pnoise_type_string, noise_type_string[LINELENGTH+1];
+char *pnoise_location_string, noise_location_string[LINELENGTH+1];
+char *pmodulation_type_string, modulation_type_string[LINELENGTH+1];
+xy_pair *pxy, *px1y1;
+char *plinear="linear";
 char *ptimestamp,timestamp[LINELENGTH + 1];
 
 char fileout_octave_command_line[LINELENGTH+1], *pfileout_octave_command_line;
@@ -37,10 +60,11 @@ char value_string[NUMBER_OF_VALUE_STRINGS][LINELENGTH_OF_VALUE_STRING + 1];
 char *ptitle_string, title_string[LINELENGTH + 1];
 char *poctave = "octave",*poctave_path,octave_path[LINELENGTH + 1];
 char *pgnuplot = "gnuplot",*pgnuplot_path,gnuplot_path[LINELENGTH + 1];
+char *pgimp = "gimp",*pgimp_path,gimp_path[LINELENGTH + 1];
 char plot_preference[LINELENGTH + 1];
 
 
-FILE *fpw1;
+FILE *fpw1,*fp_noise;
 
 /*Define pi */
 
@@ -49,10 +73,15 @@ pi=2.0 * asin(1.0);
 /*Initialize pointers*/
 
 pfnameout = &fnameout[0];
+pfname_vout = &fname_vout[0];
+pfnameout_jitter = &fnameout_jitter[0];
 pfileout_octave_command_line = &fileout_octave_command_line[0];
 pline1 = &line1[0];
 ptimestamp = &timestamp[0];
 pinput_string = &input_string[0];
+pmodulation_type_string = &modulation_type_string[0];
+pnoise_type_string = &noise_type_string[0];
+pnoise_location_string = &noise_location_string[0];
 
 poctave_command_1 = &octave_command_1[0];
 poctave_command_2 = &octave_command_2[0];
@@ -60,28 +89,33 @@ poctave_command_3 = &octave_command_3[0];
 ptitle_string = &title_string[0];
 poctave_path = &octave_path[0];
 pgnuplot_path = &gnuplot_path[0];
-
+pgimp_path = &gimp_path[0];
 
 printf("\nvpulse v%.2f %s\n\n",VERSION_NUMBER,VERSION_DATE);
 
-if (argc != 9)
+if (argc != 14)
 	{
-	printf("Usage with command line:\nvpulse <input_square_wave_freq_hz> <trf_per_cent_period> <duty_cycle_percent> <num_points_per_period> <num_periods>\n");
+	printf("Usage with command line:\nvpulse <input_square_wave_freq_hz> <trise_per_cent_period> <tfall_per_cent_period> <duty_cycle_percent> <num_points_per_period> <num_periods>\n<noise_amplitude (modulation index between 0.0 and 1.0)> <noise_amplitude location (filtered (f) or unfiltered(u)))>\n<noise_type (sinusoidal, gaussian, or uniform)> <noise_bandwidth_Hz> <initial_phase (degrees)> <modulation_type (AM or PM)> <num_periods_to_plot>\n");
 
 	printf("Enter square wave freq (Hz):\n");
 	fgets(pinput_string,LINELENGTH,stdin);
 	remove_carriage_return(pinput_string);
 	freq_Hz = atof(pinput_string);	
 	
-	printf("Enter rise and fall time (percent of period):\n");
+	printf("Enter rise time (percent of period):\n");
 	fgets(pinput_string,LINELENGTH,stdin);
 	remove_carriage_return(pinput_string);
-	ttran_percent = atof(pinput_string);
+	ttran_rise_percent = atof(pinput_string);
+
+	printf("Enter fall time (percent of period):\n");
+	fgets(pinput_string,LINELENGTH,stdin);
+	remove_carriage_return(pinput_string);
+	ttran_fall_percent = atof(pinput_string);
 
 	printf("Enter duty cycle (percent of period):\n");
 	fgets(pinput_string,LINELENGTH,stdin);
 	remove_carriage_return(pinput_string);
-	duty_cycle_percent = atol(pinput_string);
+	duty_cycle_percent = atof(pinput_string);
 
 	printf("Enter number of points per period:\n");
 	fgets(pinput_string,LINELENGTH,stdin);
@@ -93,21 +127,38 @@ if (argc != 9)
 	remove_carriage_return(pinput_string);
 	num_periods = atol(pinput_string);
 
-	printf("Enter noise amplitude (V):\n");
+	printf("Enter noise amplitude (modulation index (%%)):\n");
 	fgets(pinput_string,LINELENGTH,stdin);
 	remove_carriage_return(pinput_string);
 	noise_amp = atof(pinput_string);
 
-	printf("Enter noise bandwidth (Hz):\n");
+	printf("Enter noise amplitude location (filtered (f) or unfiltered (u)):\n");
+	fgets(pnoise_location_string,LINELENGTH,stdin);
+	remove_carriage_return(pnoise_location_string);
+	
+	printf("Enter noise type (sinusoidal (s), gaussian (g), uniform) (u):\n");
+	fgets(pnoise_type_string,LINELENGTH,stdin);
+	remove_carriage_return(pnoise_type_string);
+
+	printf("Enter noise bandwidth or frequency of sinusoidal noise (Hz):\n");
 	fgets(pinput_string,LINELENGTH,stdin);
 	remove_carriage_return(pinput_string);
 	noise_bandwidth_Hz = atof(pinput_string);
+	
+	printf("Enter initial phase (degrees):\n");
+	fgets(pinput_string,LINELENGTH,stdin);
+	remove_carriage_return(pinput_string);
+	init_phase_degrees = atof(pinput_string);
+
+	printf("Enter modulation type (AM (a) or PM (p)):\n");
+	fgets(pmodulation_type_string,LINELENGTH,stdin);
+	remove_carriage_return(pmodulation_type_string);
 	
 	printf("Enter the number of periods to plot:\n");
 	fgets(pinput_string,LINELENGTH,stdin);
 	remove_carriage_return(pinput_string);
 	num_periods_to_plot = atol(pinput_string);
-
+	
 	}
 else
 	{
@@ -115,157 +166,228 @@ else
 	freq_Hz = atof(pinput_string);
 	
 	strncpy(pinput_string,argv[2],LINELENGTH);
-	ttran_percent = atof(pinput_string);
-
+	ttran_rise_percent = atof(pinput_string);
+	
 	strncpy(pinput_string,argv[3],LINELENGTH);
+	ttran_fall_percent = atof(pinput_string);
+
+	strncpy(pinput_string,argv[4],LINELENGTH);
 	duty_cycle_percent = atof(pinput_string);
 	
-	strncpy(pinput_string,argv[4],LINELENGTH);
+	strncpy(pinput_string,argv[5],LINELENGTH);
 	num_points_per_period = atol(pinput_string);
 
-	strncpy(pinput_string,argv[5],LINELENGTH);
+	strncpy(pinput_string,argv[6],LINELENGTH);
 	num_periods  = atol(pinput_string);
 	
-	strncpy(pinput_string,argv[6],LINELENGTH);
-	noise_amp = atof(pinput_string);
-
 	strncpy(pinput_string,argv[7],LINELENGTH);
+	noise_amp = atof(pinput_string);
+	
+	strncpy(pnoise_location_string,argv[8],LINELENGTH);
+	remove_carriage_return(pnoise_location_string);
+
+	strncpy(pinput_string,argv[9],LINELENGTH);
+	strcpy(pnoise_type_string,pinput_string);
+
+	strncpy(pinput_string,argv[10],LINELENGTH);
 	noise_bandwidth_Hz = atof(pinput_string);
 
-	strncpy(pinput_string,argv[8],LINELENGTH);
+	strncpy(pinput_string,argv[11],LINELENGTH);
+	init_phase_degrees = atof(pinput_string);
+
+	strncpy(pinput_string,argv[12],LINELENGTH);
+	strcpy(pmodulation_type_string,pinput_string);
+
+	strncpy(pinput_string,argv[13],LINELENGTH);
 	num_periods_to_plot = atol(pinput_string);
 
 	}
 	
-	if ((num_periods_to_plot > num_periods) || (num_periods_to_plot < 1))
+if (check_inputs(freq_Hz,ttran_rise_percent,ttran_fall_percent,duty_cycle_percent,noise_amp,noise_bandwidth_Hz,
+num_points_per_period,num_periods_to_plot,num_periods,pnoise_type_string,&noise_type,pnoise_location_string,&noise_location,
+pmodulation_type_string,&modulation_type,init_phase_degrees,&init_phase_rad) != EXIT_SUCCESS)
 		{
-		printf("Number of periods to plot must be greater than 1 and less than or equal to num_periods (%ld)..exiting\n",num_periods);
+		printf("Correct inputs and try again...\n");
 		exit(0);
 		}
 
+/* Compute sinusoidal threshold based on 3rd order polynomial */
+	
+	vthreshold = 0.0;
+	for(i = 0; i< 4; i++)
+		vthreshold = vthreshold + coeffi[i]*pow(duty_cycle_percent,i);
+#ifdef DEBUG_DUTY_CYCLE
+	printf("Computed vthreshold = %.4f from duty cycle of %.2f%%.\n",vthreshold,duty_cycle_percent);
+#endif
+
 printf("Analysis parameters:\n");
-printf("Square wave input frequency = %1.6e Hz\n",freq_Hz);
-printf("Rise/fall time = %.1f %% of period\n",ttran_percent);
-printf("Duty cycle = %.1f %% of period\n",duty_cycle_percent);
+printf("Square wave input frequency = %s\n",add_units(freq_Hz,3,"Hz",value_string[0]));
+printf("Rise time = %.1f%% of period\n",ttran_rise_percent);
+printf("Fall time = %.1f%% of period\n",ttran_fall_percent);
+printf("Duty cycle = %.1f%% of period\n",duty_cycle_percent);
 printf("num_points_per_period = %ld\n",num_points_per_period);
 printf("num_periods = %ld\n",num_periods);
-printf("noise_amp = %.2f mV\n",noise_amp/1e-3);
-printf("noise_bandwidth = %s\n",add_units(noise_bandwidth_Hz,2,"Hz",value_string[0]));
+printf("modulation_index (noise_amp) = %s\n",add_units(noise_amp,1,"%",value_string[0]));
+
+if (noise_type != SINUSOIDAL_NOISE)
+	{
+	if (noise_location == ENTERED_NOISE_AMP_IS_FILTERED)
+		printf("noise amplitude location = post filter\n");
+	else
+		{
+		if (noise_location == ENTERED_NOISE_AMP_IS_UNFILTERED)
+			printf("noise amplitude location = pre-filter\n");
+		else
+			printf("noise amplitude location = unknown\n");
+		}
+	}
+
+if (noise_type == GAUSSIAN_NOISE)
+	printf("noise type = gaussian\n");
+else
+	{
+	if (noise_type == UNIFORM_NOISE)
+		printf("noise type = uniform\n");
+	else
+		{
+		if (noise_type == SINUSOIDAL_NOISE)
+			printf("noise type = sinusoidal\n");
+		else
+			printf("noise type = unknown\n");
+		}
+	}
+
+printf("Initial phase = %.1f degrees\n",init_phase_degrees );
+
+if (noise_type != SINUSOIDAL_NOISE)
+	printf("noise_bandwidth = %s\n",add_units(noise_bandwidth_Hz,2,"Hz",value_string[0]));
+else
+	printf("Sinusoidal modulation frequency = %s\n",add_units(noise_bandwidth_Hz,2,"Hz",value_string[0]));
+	
+if (modulation_type == AM_MODULATION)
+	printf("modulation type = AM\n");
+else
+	{
+	if (modulation_type == PM_MODULATION)
+		printf("modulation type = PM\n");
+	else
+		printf("modulation type = unknown\n");
+	}
 printf("num_periods_to_plot = %ld\n",num_periods_to_plot);
 
 	/* Find timestamp to append to filenames */
 
 	find_timestamp(ptimestamp,LINELENGTH);
-	sprintf(pfnameout,"square_wave_%.0fmeg_ttran_%.0f_percent_du_%.0f_noise_amp_%.0fm_noise_bw_%.0fmeg_%s.csv",freq_Hz/1e6,ttran_percent,duty_cycle_percent,noise_amp/1e-03,noise_bandwidth_Hz/1e6,ptimestamp);
+	sprintf(pfnameout,"square_wave_%.0fmeg_ttran_rise_%.0f_fall_%.0f_percent_du_%.0f_noise_amp_%.0fm_noise_bw_%.0fmeg_%s.csv",freq_Hz/1e6,ttran_rise_percent,ttran_fall_percent,duty_cycle_percent,noise_amp/1e-03,noise_bandwidth_Hz/1e6,ptimestamp);
 	printf("Output filename is \"%s\".\n",pfnameout);
-
-   /*Set counter to determine number of printed points (time_point_counter), initialize user notification counter k*/
-
-   time_point_counter = 0;
-   loopcount=1;
-   k = 0;
-
-   /*Print header to file fpw1*/
-
-   fpw1 = fopen(pfnameout,"w");
-	fprintf(fpw1,"Time(s),vout_sq (V),vout (V)\n");
-         
+            
    /*Start loop*/
    
-   freq_Hz = 100e6;
-	per_sec = 1.0/freq_Hz;
-	ttran = (((double) ttran_percent + 0.0)/100.0)*per_sec;
-	pulse_start_time = ((100.0 - duty_cycle_percent)/100.0)*per_sec - ttran;
-	pulse_end_time = per_sec - ttran;
-	
-	tau_noise_bandwidth_sec = 1.0/(2*pi*noise_bandwidth_Hz);
-	
-	delta_time = per_sec/((double) num_points_per_period - 1);
+	per_sec = 1.0/freq_Hz;		
+   ttran_rise = (ttran_rise_percent/100.0)*per_sec;
+	ttran_fall = (ttran_fall_percent/100.0)*per_sec;  
+	tau_noise_bandwidth_sec = 1.0/(2*pi*noise_bandwidth_Hz);	
+	delta_time = per_sec/((double) num_points_per_period - 0.0);	
 	prpoint = delta_time;
 	
 	TSTART = delta_time*( (double) (num_points_per_period*(num_periods - num_periods_to_plot)));
 	printf("Analysis is for %s, data printed starting at %s.\n",add_units(delta_time*( (double) num_points_per_period*num_periods),3,"s",value_string[0]),add_units(TSTART,3,"s",value_string[1]));
+
+	/* Compute input (unfiltered) noise for given bandwidth and desired output noise for gaussian and uniform noise */
 	
-	if( (time_sec = (double *) calloc(num_points_per_period,sizeof(double))) == NULL)
+	if (noise_type != SINUSOIDAL_NOISE)
 		{
-		printf("Error allocating memory to time_sec!\n");
-		exit(0);
-		}
-	if( (vpulse= (double *) calloc(num_points_per_period,sizeof(double))) == NULL)
-		{
-		printf("Error allocating memory to vpulse!\n");
-		exit(0);
-		}
-	if( (time_sq = (double *) calloc(num_points_per_period*num_periods,sizeof(double))) == NULL)
-		{
-		printf("Error allocating memory to time!\n");
-		exit(0);
-		}
-	if( (vout_sq = (double *) calloc(num_points_per_period*num_periods,sizeof(double))) == NULL)
-		{
-		printf("Error allocating memory to vout_sq!\n");
-		exit(0);
-		}
-	if( (vout = (double *) calloc(num_points_per_period*num_periods,sizeof(double))) == NULL)
-		{
-		printf("Error allocating memory to vout!\n");
-		exit(0);
-		}
-	
-	for(i = 0; i < (num_points_per_period - 1); i++)
-		time_sec[i] = delta_time*((double) i);
-	
-	for (i = 0;i < num_points_per_period;i++)
-		{
-		if(time_sec[i] < pulse_start_time)
-			vpulse[i] = 0.0;
+		if (noise_location == ENTERED_NOISE_AMP_IS_FILTERED)
+			unfiltered_noise_amp = 0.50*10.0*noise_amp/(c0*pow(noise_bandwidth_Hz*delta_time,m));
 		else
 			{
-			if(time_sec[i] < pulse_end_time)
-				{
-				if(vpulse[i-1] < 1.0)
-					{
-					if ((time_sec[i]-pulse_start_time)/ttran > 1.0)
-						vpulse[i] = 1.0;
-					else
-						vpulse[i] = (time_sec[i]-pulse_start_time)/ttran;
-					}
-				else
-					vpulse[i] = 1.0;
-				}
+			if (noise_location == ENTERED_NOISE_AMP_IS_UNFILTERED)
+				unfiltered_noise_amp = noise_amp;
 			else
 				{
-				if(vpulse[i-1] >= 0.01)
-					{
-					if (((1.0 - (time_sec[i]-pulse_end_time)/ttran)) < 0.0)
-						vpulse[i] = 0.0;
-					else
-						vpulse[i] = (1.0 - (time_sec[i]-pulse_end_time)/ttran);
-					}
-				else
-					vpulse[i] = 0.0;
+				printf("Unknown noise injection location type, setting injection location to after filter.\n");
+				unfiltered_noise_amp = 0.50*10.0*noise_amp/(c0*pow(noise_bandwidth_Hz*delta_time,m));
 				}
 			}
 		}
 		
-	j = 0;
+		#ifdef DEBUG_NOISE
+			if (noise_location == ENTERED_NOISE_AMP_IS_FILTERED)
+				printf("Setting unfiltered_noise_amp to %.4f from noise_amp of %.4f\nfor noise bandwidth of %s and sampling frequency of %s.\n",unfiltered_noise_amp,noise_amp, add_units(noise_bandwidth_Hz,2,"Hz",value_string[0]),add_units(1.0/delta_time,2,"Hz",value_string[1]));
+			else
+				{
+				if (noise_location == ENTERED_NOISE_AMP_IS_UNFILTERED)
+					printf("Setting unfiltered noise_amp to %.4f\nfor noise bandwidth of %s and sampling frequency of %s.\n",unfiltered_noise_amp,add_units(noise_bandwidth_Hz,2,"Hz",value_string[0]),add_units(1.0/delta_time,2,"Hz",value_string[1]));
+				else
+					{
+					printf("Unknown noise injection location type, setting to after filter.\n");
+					printf("Setting unfiltered_noise_amp to %.4f from noise_amp of %.4f\nfor noise bandwidth of %s and sampling frequency of %s.\n",unfiltered_noise_amp,noise_amp, add_units(noise_bandwidth_Hz,2,"Hz",value_string[0]),add_units(1.0/delta_time,2,"Hz",value_string[1]));
+					}
+				}
+		#endif
 	
-	for (i = 0; i < num_points_per_period*num_periods; i++)
+	if( (time_sec = (double *) calloc(num_points_per_period*(num_periods + 1) + 1,sizeof(double))) == NULL)
 		{
-		if (j > (long int) floor(per_sec/delta_time))
-			j = 0;
-		vout_sq[i] = vpulse[j];
-		time_sq[i] = delta_time*((double) i);
-		j++;
+		printf("Error allocating memory to time_sec!\n");
+		exit(0);
 		}
-/*	for(i = 0;i<9;i++)
-		printf("time_sq[%ld] = %1.6e, vout_sq[%ld] = %1.6e\n",i,time_sq[i],i,vout_sq[i]);*/
+	if( (vsin = (double *) calloc(num_points_per_period*(num_periods + 1) + 1,sizeof(double))) == NULL)
+		{
+		printf("Error allocating memory to vsin!\n");
+		exit(0);
+		}
+	if( (vsin_pm = (double *) calloc(num_points_per_period*(num_periods + 1) + 1,sizeof(double))) == NULL)
+		{
+		printf("Error allocating memory to vsin_pm!\n");
+		exit(0);
+		}
+	if( (vsq = (double *) calloc(num_points_per_period*(num_periods + 1) + 1,sizeof(double))) == NULL)
+		{
+		printf("Error allocating memory to vsq!\n");
+		exit(0);
+		}
+	if( (vout = (double *) calloc(num_points_per_period*(num_periods + 1) + 1,sizeof(double))) == NULL)
+		{
+		printf("Error allocating memory to vout!\n");
+		exit(0);
+		}
+	if( (am_noise = (double *) calloc(num_points_per_period*(num_periods + 1) + 1,sizeof(double))) == NULL)
+		{
+		printf("Error allocating memory to am_noise!\n");
+		exit(0);
+		}
+	if( (pm_noise = (double *) calloc(num_points_per_period*(num_periods + 1) + 1,sizeof(double))) == NULL)
+		{
+		printf("Error allocating memory to pm_noise!\n");
+		exit(0);
+		}
+	if( (vth_cross_rise = (double *) calloc(2*num_periods,sizeof(double))) == NULL)
+		{
+		printf("Error allocating memory to vth_cross_rise!\n");
+		exit(0);
+		}
+	if( (vth_cross_fall = (double *) calloc(2*num_periods,sizeof(double))) == NULL)
+		{
+		printf("Error allocating memory to vth_cross_fall!\n");
+		exit(0);
+		}
+	if( (duty_cycle = (double *) calloc(2*num_periods,sizeof(double))) == NULL)
+		{
+		printf("Error allocating memory to duty_cycle!\n");
+		exit(0);
+		}
 		
-	noise_vthreshold = 2.0*noise_amp;
-	
-   for (i = 0; i < num_points_per_period*num_periods; i++)
+	k = 0;
+	end_flag = 0;
+	#ifdef DEBUG_NOISE
+		sprintf(pinput_string,"fnoise_%s.csv",ptimestamp);
+		fp_noise = fopen(pinput_string,"w");
+		fprintf(fp_noise,"Time (sec),noise (m%%),filtered noise (m%%)\n");
+	#endif
+		
+   for (i = 0; i < num_points_per_period*(num_periods + 1) + 1; i++)
       {
-
+		time_sec[i] = delta_time *((double) i);
 	   /*Add random phase noise of maximum magnitude "noise_amp_pp" UIpp to fin*/
 	   
 	   if (noise_amp != 0.0)
@@ -273,79 +395,331 @@ printf("num_periods_to_plot = %ld\n",num_periods_to_plot);
 	      switch (noise_type)
 	         {
 	         case GAUSSIAN_NOISE:
-	            noise = random_gaussian_clocknoise(noise_amp,0.0,seed);
+	            noise = random_gaussian_clocknoise(unfiltered_noise_amp/6.0,0.0,seed);
+	            noise_vthreshold = noise_amp/2.0;
+	            if(rkstep1(time_sec[i],time_sec[i] + delta_time,tau_noise_bandwidth_sec,
+	            noise,&filtered_noise,10.0,-10.0,errmax,MAX_ITERATIONS) == 1)
+            		{
+            		printf("Error in runge-kutta routine for noise, program exits!\n");
+           			 exit(0);
+            		}
 	            break;
 	         case UNIFORM_NOISE:
-	         	noise = random_uniform_clocknoise(noise_amp,0.0,seed);
+	         	noise = random_uniform_clocknoise(unfiltered_noise_amp,0.0,seed);
+	         	noise_vthreshold = noise_amp/2.0;
+	            if(rkstep1(time_sec[i],time_sec[i] + delta_time,tau_noise_bandwidth_sec,
+	            noise,&filtered_noise,10.0,-10.0,errmax,MAX_ITERATIONS) == 1)
+            		{
+            		printf("Error in runge-kutta routine for noise, program exits!\n");
+           			 exit(0);
+            		}
 	            break;
+	         case SINUSOIDAL_NOISE:
+	         	noise = noise_amp*sin(2.0*pi*noise_bandwidth_Hz*time_sec[i]);
+	         	noise_vthreshold = noise_amp;
+	         	filtered_noise = noise;
+	         	break;
 	         default:
 	            printf("In main.c, did NOT recognize noise type! Exiting...\n");
 	            exit(0);
 	         }
-	      
-	      if(rkstep1(time_sq[i],time_sq[i + 1],tau_noise_bandwidth_sec,noise,&filtered_noise,10.0,
-         -10.0,errmax,MAX_ITERATIONS) == 1)
-            {
-            printf("Error in runge-kutta routine for noise, program exits!\n");
-            exit(0);
-            } 
-	      
+	      	      
 	      if (filtered_noise > noise_max)
 	         noise_max = filtered_noise;
 	      if (filtered_noise < noise_min)
 	         noise_min = filtered_noise;
+	      if (fabs(filtered_noise - last_filtered_noise) > maximum_delta_noise)
+	         maximum_delta_noise = filtered_noise - last_filtered_noise;
+	      last_filtered_noise = filtered_noise;
 	      if (fabs(filtered_noise) > noise_vthreshold)
 	         noise_counter++;
-
-	      vout[i] = vout_sq[i]*filtered_noise; 
+	      #ifdef DEBUG_NOISE
+	      	fprintf(fp_noise,"%1.12e,%1.12e,%1.12e\n",time_sec[i],noise/1e-03,filtered_noise/1e-03);
+	      #endif
+			switch (modulation_type)
+				{
+				case AM_MODULATION:
+	      		am_noise[i] = filtered_noise;
+	      		pm_noise[i] = 0.0;
+	      		break;
+	      	case PM_MODULATION:
+	      		pm_noise[i] = filtered_noise;
+	      		am_noise[i] = 0.0;
+	 	      		break;
+	      	default:
+	      		printf("In main.c, did NOT recognize modulation type! Exiting...\n");
+	            exit(0);
+				}
+	      	
 	      }
       else
-      	vout[i] = vout_sq[i];
+      	{
+      	am_noise[i] = 0.0;
+      	pm_noise[i] = 0.0;
+      	} 	
+     	}
+     	
+#ifdef DEBUG_NOISE
+	fclose(fp_noise);
+#endif      	
+/*---------------------------------------*/
 
-	   /*Print data to file if time > TSTART and time is close to printstep*/
-	
-      prtime = ((double) time_point_counter)*prpoint + TSTART;
-      /*if (i < 10)
-      	printf("prtime = %1.12e, time_sq[%ld] = %1.12e\n",prtime,i,time_sq[i]);*/
+length_vth_cross_rise = 0;
+length_vth_cross_fall = 0;
 
-      if (((prtime - time_sq[i]) < delta_time) && (fabs(prtime - time_sq[i]) < fabs(prtime - time_sq[i + 1])))
-         {
-         sprintf(pline1,"%1.12e,%1.12e,%1.12e\n",time_sq[i],vout_sq[i],vout[i]);
-			fprintf(fpw1,"%s",pline1);
-         ++time_point_counter;
-      	}
-     } 
+for (i = 0;i < num_points_per_period*(num_periods + 1) + 1;i++)
+	{
+	time_sec[i] = delta_time *((double) i);
+	vsin[i] = sin(2.0*pi*time_sec[i]*freq_Hz + init_phase_rad);
+	vsin_pm[i] = sin(2.0*pi*time_sec[i]*freq_Hz + pm_noise[i]*2.0*pi + init_phase_rad);
+	if (vsin[i] >= vthreshold)
+		{
+		vsq[i] = 1.0;
+		if (i > 0)
+			{
+			if ((vsin[i] >= vthreshold) && (vsin[i - 1] < vthreshold))
+				{
+				if (length_vth_cross_rise > 0)
+					{
+					if ((vsin[i] >= vthreshold) && (vsin[i - 1] < vthreshold))
+						{
+						vth_cross_rise[length_vth_cross_rise] = time_sec[i] + pm_noise[i]*per_sec;
+						length_vth_cross_rise++;
+						}
+					}
+				else
+					{
+					vth_cross_rise[length_vth_cross_rise] = time_sec[i] + pm_noise[i]*per_sec;
+					length_vth_cross_rise++;
+					}	
+				}
+			}
+		else
+			{
+			vsq[i] = 1.0;
+			}
+		}
+	else
+		{
+		vsq[i] = 0.0;
+		if (i > 0)
+			{
+			if ((vsin[i] <= vthreshold) && (vsin[i - 1] > vthreshold))
+				{
+				if (length_vth_cross_fall > 0)
+					{
+					if ((vsin[i] <= vthreshold) && (vsin[i - 1] > vthreshold))
+						{
+						vth_cross_fall[length_vth_cross_fall] = time_sec[i] + pm_noise[i]*per_sec;
+						length_vth_cross_fall++;
+						}
+					}
+				else
+					{
+					vth_cross_fall[length_vth_cross_fall] = time_sec[i] + pm_noise[i]*per_sec;
+					length_vth_cross_fall++;
+					}
+				}
+			}
+			else
+				{
+				vsq[i] = 0.0;
+				}
+			}
+		}
+
+/* -------------------------------------------- */
+
+
+if (length_vth_cross_fall >= length_vth_cross_rise)
+	num_crossings = length_vth_cross_rise;
+else
+	num_crossings = length_vth_cross_fall;
+
+if(vth_cross_fall[1] >= vth_cross_rise[1])
+	{
+	for(i = 1;i < num_crossings;i++)
+		duty_cycle[i - 1] = 100.0*(vth_cross_fall[i] - vth_cross_rise[i])/(vth_cross_rise[i] - vth_cross_rise[i - 1]);
+	}
+else
+	{
+	for(i = 1;i < num_crossings;i++)
+		duty_cycle[i - 1] = 100.0*(1.0 - (vth_cross_rise[i] - vth_cross_fall[i])/(vth_cross_rise[i] - vth_cross_rise[i - 1]));
+	}
+#ifdef DEBUG_DUTY_CYCLE
+	FILE *fp_du;
+	fp_du = fopen("duty_cycle.csv","w");
+	for (i = 0; i < (num_crossings -1);i++)
+		fprintf(fp_du,"%ld,%.6f,%1.12e,%1.12e\n",i,duty_cycle[i],vth_cross_rise[i],vth_cross_fall[i]);
+	fclose(fp_du);
+#endif
+
+mean_du = mean(duty_cycle,num_crossings - 1);
+printf("Computed mean duty cycle as %.2f from %ld number of threshold crossings.\n",mean_du,num_crossings);
+
+j = 0;
+k = 0;
+
+for (i = 0; i < num_points_per_period*(num_periods + 1) + 1; i++)
+	{
+	if((time_sec[i] >= (vth_cross_rise[j] - ttran_rise/2.0)) && (time_sec[i] < (vth_cross_rise[j] + ttran_rise/2.0)))
+		vout[i] = 0.50 + (time_sec[i] - vth_cross_rise[j])/ttran_rise;
+	else
+		{
+		if((time_sec[i] >= (vth_cross_fall[k] - ttran_fall/2.0)) && (time_sec[i] < (vth_cross_fall[k] + ttran_fall/2.0)))
+			 vout[i] = 0.50 + (vth_cross_fall[k] - time_sec[i])/ttran_fall;
+		else
+			{
+			if (i > 0)
+				{
+				if (vout[i - 1] > 0.50)
+					vout[i] = 1.0;
+				else
+					vout[i] = 0.0;
+				}
+			else
+				vout[i] = vsq[0];
+			}
+		}
+	if (((time_sec[i + 1] - vth_cross_rise[j]) >= ttran_rise/2.0) && (j < length_vth_cross_rise))
+		{
+		j++;
+		/* printf("incrementing rise event at %1.4e. j = %ld\n",time_sec[i],j); */
+		}
+	if (((time_sec[i + 1] - vth_cross_fall[k]) >= ttran_fall/2.0) && (k < length_vth_cross_fall))
+		{
+		k++;
+		/* printf("incrementing fall event at %1.4e. k = %ld\n",time_sec[i],k); */
+		}
+	}
+
+/* Remove first period since its initial transition time was not set to ttran_rise nor ttran_fall */
+/* Apply AM modulation to signals */
+
+j = 0;
+for (i = 0; i < num_points_per_period*(num_periods + 1); i++)
+	{
+	if (i >= num_points_per_period)
+		{
+		time_sec[j] = time_sec[i] - time_sec[num_points_per_period];
+		vsin_pm[j] = vsin_pm[i]*(1.0 + am_noise[i]);
+		vsq[j] = vsq[i]*(1.0 + am_noise[i]);
+		vout[j] = vout[i]*(1.0 + am_noise[i]);
+		j++;
+		}
+	}
+for (i = j; i < j + num_points_per_period;i++)
+	{
+	time_sec[i] = time_sec[j - 1];
+	vsin_pm[i] = vsin_pm[j - 1]*(1.0 + am_noise[j - 1]);
+	vsq[i] = vsq[j - 1]*(1.0 + am_noise[j - 1]);
+	vout[i] = vout[j - 1]*(1.0 + am_noise[j - 1]);
+	}
+
+/*---------------------------------------*/
+
+      
+/*Open output file and print header to file fpw1*/
+
+fpw1 = fopen(pfnameout,"w");
+fprintf(fpw1,"Time (sec),vsin (V),vsin_pm (V),vsq (V),vout (V)\n");
+
+/*Set counter to determine number of printed points (time_point_counter) */
+
+time_point_counter = 0;
+
+for (i = 0; i < num_points_per_period*num_periods; i++)
+	{
+
+   /*Print data to file if time > TSTART and time is close to printstep*/
+
+   prtime = ((double) time_point_counter)*prpoint + TSTART;
+   if (((prtime - time_sec[i]) < delta_time) && (fabs(prtime - time_sec[i]) <= fabs(prtime - time_sec[i + 1])))
+      {
+      sprintf(pline1,"%1.12e,%1.12e,%1.12e,%1.12e,%1.12e\n",time_sec[i],vsin[i],vsin_pm[i],vsq[i],vout[i]);
+		fprintf(fpw1,"%s",pline1);
+      ++time_point_counter;
+      }
+   }
+fclose(fpw1);
  
-	   if (noise_amp != 0.0)
-	      {
-	      printf("Input Data: noise_max = %.4f mV, noise_min = %.2f mV, or %.2f mVpp.\n",
-	      noise_max/1e-03, noise_min/1e-03, (noise_max - noise_min)/1e-03);
-	      printf("The magnitude of the noise exceeded %.2f mV a total of %ld times.\n",
-	      noise_vthreshold/1e-03,noise_counter);
-	      }
-	   
-/* Only produce transient plot if there is no applied jitter frequency and the jitter amplitude is 0 */
+if (noise_amp != 0.0)
+   {
+   printf("Input Data: noise_max = %.4f m%%, noise_min = %.2f m%%, or %.2f m%%pp.\n",
+   noise_max/1e-03, noise_min/1e-03, (noise_max - noise_min)/1e-03);
+   printf("Maximum change in noise over 1 timestep = %.4f m%%\n",maximum_delta_noise/1e-03);
+   if (noise_type != SINUSOIDAL_NOISE)
+   	printf("The magnitude of the noise exceeded %.2f m%% a total of %ld times.\n",
+   noise_vthreshold/1e-03,noise_counter);
+   }
+   
+/* Create command lines for plotting waveform in gnuplot and plot if gnuplot is available */
 
-fclose(fpw1);
+if ((check_executable(pgnuplot,pgnuplot_path)) == 0)
+	{
+	printf("Did not locate executable for gnuplot.\n");
+	printf("Disabling all plots as gnuplot was not found in path.\n");
+	}
+else
+	{
+	/* Generate text file with gnuplot output command */
+	
+	if (noise_type != SINUSOIDAL_NOISE)	
+		sprintf(ptitle_string,"Input %s Square Wave (Du = %.1f %%, trf = %.1f %% of period) and Modulated Noise\nnoise\\_amp = %s, noise bandwidth = %s, sampling frequency = %s",add_units(freq_Hz,2,"Hz",value_string[0]),duty_cycle_percent,ttran_rise_percent,add_units(noise_amp,2,"V",value_string[1]),add_units(noise_bandwidth_Hz,2,"Hz",value_string[2]),add_units(1.0/delta_time,2,"Hz",value_string[3]));
+	else
+		sprintf(ptitle_string,"Input %s Square Wave (Du = %.1f %%, trf = %.1f %% of period) with Sinusoidal Modulation\nModulation amplitude = %s, modulation frequency = %s, sampling frequency = %s",add_units(freq_Hz,2,"Hz",value_string[0]),duty_cycle_percent,ttran_rise_percent,add_units(noise_amp,2,"V",value_string[1]),add_units(noise_bandwidth_Hz,2,"Hz",value_string[2]),add_units(1.0/delta_time,2,"Hz",value_string[3]));
 
-sprintf(ptitle_string,"Input %s Square Wave (Du = %.1f %%, trf = %.1f %% of period) and Modulated Noise\nnoise\\_amp = %s, noise bandwidth = %s, sampling frequency = %s",add_units(freq_Hz,2,"Hz",value_string[0]),duty_cycle_percent,ttran_percent,add_units(noise_amp,2,"V",value_string[1]),add_units(noise_bandwidth_Hz,2,"Hz",value_string[2]),add_units(1.0/delta_time,2,"Hz",value_string[3]));
+	sprintf(pinput_string,"head -1 %s > ./.tempfile0\n",pfnameout);
+	system(pinput_string);
+	sprintf(pinput_string,"tail -%ld %s >> ./.tempfile0\n",5*num_points_per_period,pfnameout);
+	system(pinput_string);
 
-sprintf(poctave_command_1,"gnuplot -c ./gnu_plot.gnu \'%s\' \'%s\' \'%s\'\n",pfnameout,ptitle_string,ptimestamp);
+	sprintf(poctave_command_1,"gnuplot -c ./plotting_routines/gnuplot/gnu_plot.gnu \'./.tempfile0' \'%s\' \'%s\'\n",ptitle_string,ptimestamp);
+	system(poctave_command_1);
+	if ((check_executable(pgimp,pgimp_path)) != 0)
+		{
+		sprintf(poctave_command_2,"gimp sq_%s.png&\n",ptimestamp);
+		system(poctave_command_2);
+		}
+	system("rm ./.tempfile0");
+	sprintf(pinput_string,"gnuplot_comamnd_%s.txt",ptimestamp);
+	fpw1 = fopen(pinput_string,"w");
+	fprintf(fpw1,"%s",poctave_command_1);
+	fclose(fpw1);
+	}
 
-sprintf(poctave_command_2,"open -a \"graphicconverter 12\" sq_%s.png\n",ptimestamp);
+/* Create temporary file with vout data to take psd */
 
-system(poctave_command_1);
-system(poctave_command_2);
-sprintf(pinput_string,"gnuplot_comamnd_%s.txt",ptimestamp);
-fpw1 = fopen(pinput_string,"w");
-fprintf(fpw1,"%s",poctave_command_1);
-fclose(fpw1);
+sprintf(pfname_vout,"vout_%.0fmeg_ttran_rise_%.0f_fall_%.0f_percent_du_%.0f_noise_amp_%.0fm_noise_bw_%.0fmeg_%s.csv",freq_Hz/1e6,ttran_rise_percent,ttran_fall_percent,duty_cycle_percent,noise_amp/1e-03,noise_bandwidth_Hz/1e6,ptimestamp);
+
+sprintf(pinput_string,"cut -d\",\" -f1,5 %s > %s\n",pfnameout,pfname_vout);
+system(pinput_string);
+
+sprintf(pinput_string,"psd_sppowr %s 4 0\n",pfname_vout);
+system(pinput_string);
+
+#ifdef COMPUTE_JITTER
+sprintf(pfnameout_jitter,"vout_%.0fmeg_ttran_rise_%.0f_fall_%.0f_percent_du_%.0f_noise_amp_%.0fm_noise_bw_%.0fmeg_jitter_%s.csv",freq_Hz/1e6,ttran_rise_percent,ttran_fall_percent,duty_cycle_percent,noise_amp/1e-03,noise_bandwidth_Hz/1e6,ptimestamp);
+sprintf(pinput_string,"jitterhist_col %s 2 1 %s %.4e 0.50 n %.4e\n",pfname_vout,pfnameout_jitter,1e-09/delta_time,1e-06*freq_Hz);
+system(pinput_string);
+#endif
 
 free(time_sec);
-free(vpulse);
-free(time_sq);
-free(vout_sq);
+free(vsin);
+free(vsq);
 free(vout);
+free(am_noise);
+free(pm_noise);
+free(vth_cross_rise);
+free(vth_cross_fall);
+free(duty_cycle);
+
+remove(pfname_vout);
+if (num_points_per_period*num_periods > 10000)
+	{
+	sprintf(pinput_string,"gzip %s\n",pfnameout);
+	system(pinput_string);
+	}
 
 return EXIT_SUCCESS;
 }

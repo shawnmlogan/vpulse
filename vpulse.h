@@ -8,15 +8,44 @@
 
 /*Add defines for debugging*/
 
+/* #define DEBUG_NOISE
+#define DEBUG_DUTY_CYCLE
+#define COMPUTE_JITTER */
+
+#define COMPUTE_JITTER
+
+
 /*Add #defines for version number*/
 
-#define VERSION_NUMBER	1.1
-#define VERSION_DATE "7/29/2023"
+#define VERSION_NUMBER	1.4
+#define VERSION_DATE "8/15/2023"
 
 /*Add #defines for noise type*/
 
 #define GAUSSIAN_NOISE 0
 #define UNIFORM_NOISE 1
+#define SINUSOIDAL_NOISE 2
+
+/*Add #defines for location of entered noise amplitude*/
+
+#define ENTERED_NOISE_AMP_IS_FILTERED 0
+#define ENTERED_NOISE_AMP_IS_UNFILTERED 1
+
+/*Add #defines for modulation type*/
+
+#define AM_MODULATION 0
+#define PM_MODULATION 1
+
+/* Add #defines and structure for interpolation */
+
+/* #define DEBUG_INTERPOLATE_XY */
+#define SKIP_IF_OVERRANGE 1
+#define MINIMUM_INTERPOLATED_VALUE 0.0
+#define MAXIMUM_INTERPOLATED_VALUE 1.0
+
+typedef struct {
+	double x,y;
+	} xy_pair;
 
 /* General #defines */
 
@@ -52,7 +81,6 @@
  extern double pi;
 
 
-
 /*Function prototypes*/
 
 
@@ -62,6 +90,10 @@ int find_timestamp(char *pdate_string,int max_characters);
 
 void remove_carriage_return(char *pline);
 int check_executable(char *pprogram_executable,char *preturn_string);
+int double_compare(const void* a, const void* b);
+int parsestring_to_doubles_array(char *pinput_string,double *pdoubles_array,int *parray_size,int max_array_size);
+double mean(double *x, long int N);
+int check_inputs(double freq_Hz,double ttran_rise_percent,double ttran_fall_percent,double duty_cycle_percent, double noise_amp, double noise_bandwidth_Hz, long int num_points_per_period, long int num_periods_to_plot, long int num_periods, char * pnoise_type_string, int *noise_type, char *pnoise_location_string, int *noise_location, char * pmodulation_type_string, int *modulation_type, double init_phase_degrees, double *init_phase_rad);
 
 /*Functions used to compute derivatives of diff equations*/
 
@@ -80,6 +112,9 @@ double RS1, double RS2,int ph);
 double random_gaussian_clocknoise(double sigma, double average_value, unsigned int seed);
 double random_uniform_clocknoise(double range, double average_value, unsigned int seed);
 char *pnoise_type(int noise_type);
+int find_modulation_type(char * pmodulation_type_string, int *modulation_type);
+int find_noise_type(char * pnoise_type_string, int *noise_type);
+int find_noise_location(char * ppnoise_location_string, int *noise_location);
 
 /*Analysis data related functions*/
 
