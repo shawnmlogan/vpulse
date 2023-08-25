@@ -17,8 +17,8 @@
 
 /*Add #defines for version number*/
 
-#define VERSION_NUMBER	1.4
-#define VERSION_DATE "8/15/2023"
+#define VERSION_NUMBER	1.5
+#define VERSION_DATE "8/25/2023"
 
 /*Add #defines for noise type*/
 

@@ -31,6 +31,7 @@ int noise_type = GAUSSIAN_NOISE;
 int noise_location = ENTERED_NOISE_AMP_IS_FILTERED;
 int modulation_type = AM_MODULATION;
 int end_flag = 0;
+int num_samples_moving_average = 1;
 
 unsigned int seed;
 
@@ -700,7 +701,7 @@ system(pinput_string);
 
 #ifdef COMPUTE_JITTER
 sprintf(pfnameout_jitter,"vout_%.0fmeg_ttran_rise_%.0f_fall_%.0f_percent_du_%.0f_noise_amp_%.0fm_noise_bw_%.0fmeg_jitter_%s.csv",freq_Hz/1e6,ttran_rise_percent,ttran_fall_percent,duty_cycle_percent,noise_amp/1e-03,noise_bandwidth_Hz/1e6,ptimestamp);
-sprintf(pinput_string,"jitterhist_col %s 2 1 %s %.4e 0.50 n %.4e\n",pfname_vout,pfnameout_jitter,1e-09/delta_time,1e-06*freq_Hz);
+sprintf(pinput_string,"jitterhistv15_col %s 2 %s %.4e 0.50 %d y n %.4e\n",pfname_vout,pfnameout_jitter,1e-09/delta_time,num_samples_moving_average,1e-06*freq_Hz);
 system(pinput_string);
 #endif
 
