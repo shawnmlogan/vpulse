@@ -13,7 +13,6 @@
 #define COMPUTE_JITTER
 #define DEBUG_SQUARE_WAVE */
 
-#define DEBUG_NOISE
 #define COMPUTE_JITTER
 
 
