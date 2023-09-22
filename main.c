@@ -796,8 +796,6 @@ else
 		strcpy(pfname_vout,pfnameout);
 	#endif
 	
-	system(pinput_string);
-	
 	sprintf(pinput_string,"psd_sppowr %s 4 0 7\n",pfname_vout);
 	system(pinput_string);
 	
