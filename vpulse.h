@@ -10,15 +10,23 @@
 
 /* #define DEBUG_NOISE
 #define DEBUG_DUTY_CYCLE
-#define COMPUTE_JITTER */
+#define COMPUTE_JITTER
+#define DEBUG_SQUARE_WAVE */
 
+#define DEBUG_NOISE
 #define COMPUTE_JITTER
 
 
 /*Add #defines for version number*/
 
-#define VERSION_NUMBER	1.5
-#define VERSION_DATE "8/25/2023"
+#define VERSION_NUMBER	1.7
+#define VERSION_DATE "9/22/2023"
+
+/* Add #defines for minimum number of points per period based on transition */
+/* times and duty cycle */
+
+#define MIN_NUM_POINTS_PER_TRANSIION 10
+#define MIN_NUM_POINTS_PER_ONTIME 10
 
 /*Add #defines for noise type*/
 
