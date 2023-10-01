@@ -7,7 +7,7 @@ int main(int argc, char **argv)
 
 /*Define variables*/
 
-double *time_sec, *vsin, *vsin_pm, *vsq, *vout, *pm_noise, *am_noise, *tmp_double_ptr;
+double *time_sec, *vsin, *vsin_pm, *vsq, *vout, *vout_filtered, *pm_noise, *am_noise, *tmp_double_ptr;
 double *vth_cross_rise, *vth_cross_fall, *duty_cycle, mean_du = 0.0;
 double init_phase_rad = 0.0, init_phase_degrees = 0.0;
 double prpoint, prtime, TSTART = 0.0;
@@ -16,6 +16,7 @@ double noise = 0.0, noise_amp = 0.10, unfiltered_noise_amp = 0.0, maximum_delta_
 double noise_vthreshold, filtered_noise = 0.0, last_filtered_noise = 0.0, noise_max = -999.0, noise_min =999.0;
 double freq_Hz, per_sec, ttran_rise_percent, ttran_rise, ttran_fall_percent, ttran_fall;
 double vthreshold, duty_cycle_percent, delta_time;
+double vout_bandwidth_multiplier = VOUT_BANDWIDTH_MULTIPLIER, tau_vout_sec, vout_filtered_cap = 0.0;
 
 /* Coefficients to set sinusoid threshold for an input duty cycle */
 
@@ -70,7 +71,7 @@ FILE *fpw1,*fp_noise;
 
 /*Define pi */
 
-pi=2.0 * asin(1.0);
+pi = 2.0 * asin(1.0);
 
 /*Initialize pointers*/
 
@@ -96,12 +97,13 @@ pjitterhistv15_col_path = &jitterhistv15_col_path[0];
 
 printf("\nvpulse v%.3f %s\n\n",VERSION_NUMBER,VERSION_DATE);
 
-if ((argc != 14) && (argc != 9))
+if ((argc != 15) && (argc != 10))
 	{
 	printf("Detected %d arguments for command line use of \"vpulse\"!\n\n",argc);
-	printf("If the waveform is not amplitude or phase modulated, 8 arguments are required.\n\n");
+	printf("If the waveform is not amplitude or phase modulated, 9 arguments are required.\n\n");
 	printf("Usage with command line:\nvpulse <input_square_wave_freq_hz> <initial_phase (degrees)>\n");
 	printf("<trise_per_cent_period> <tfall_per_cent_period> <duty_cycle_percent>\n");
+	printf("<vout RC filter bandwidth multiplier (0 for no bandlimitng)>\n");
 	printf("<num_points_per_period> <num_periods> <num_periods_to_plot>\n\n");
 
 	printf("If the waveform includes amplitude or phase modulation, 13 arguments are required.\n");
@@ -109,6 +111,7 @@ if ((argc != 14) && (argc != 9))
 		
 	printf("Usage with command line:\nvpulse <input_square_wave_freq_hz> <initial_phase (degrees)>\n");
 	printf("<trise_per_cent_period> <tfall_per_cent_period> <duty_cycle_percent>\n");
+	printf("<vout RC filter bandwidth multiplier (0 for no bandlimitng)>\n");
 	printf("<num_points_per_period> <num_periods> <num_periods_to_plot>\n");
 	printf("<noise_amplitude (modulation index between 0.0 and 1.0)>\n");
 	printf("<noise_amplitude location (filtered (f) or unfiltered(u)))>\n");
@@ -140,6 +143,11 @@ if ((argc != 14) && (argc != 9))
 	remove_carriage_return(pinput_string);
 	duty_cycle_percent = atof(pinput_string);
 
+	printf("Enter vout RC filter frequency multiplier (enter 0 for no bandlimiting):\n");
+	fgets(pinput_string,LINELENGTH,stdin);
+	remove_carriage_return(pinput_string);
+	vout_bandwidth_multiplier = atof(pinput_string);
+	
 	printf("Enter number of points per period:\n");
 	fgets(pinput_string,LINELENGTH,stdin);
 	remove_carriage_return(pinput_string);
@@ -180,7 +188,7 @@ if ((argc != 14) && (argc != 9))
 	}
 else
 	{
-	if (argc == 14)
+	if (argc == 15)
 		{
 		strncpy(pinput_string,argv[1],LINELENGTH);
 		freq_Hz = atof(pinput_string);
@@ -196,29 +204,32 @@ else
 	
 		strncpy(pinput_string,argv[5],LINELENGTH);
 		duty_cycle_percent = atof(pinput_string);
-		
+
 		strncpy(pinput_string,argv[6],LINELENGTH);
+		vout_bandwidth_multiplier = atof(pinput_string);
+			
+		strncpy(pinput_string,argv[7],LINELENGTH);
 		num_points_per_period = atol(pinput_string);
 	
-		strncpy(pinput_string,argv[7],LINELENGTH);
+		strncpy(pinput_string,argv[8],LINELENGTH);
 		num_periods  = atol(pinput_string);
 	
-		strncpy(pinput_string,argv[8],LINELENGTH);
+		strncpy(pinput_string,argv[9],LINELENGTH);
 		num_periods_to_plot = atol(pinput_string);
 		
-		strncpy(pinput_string,argv[9],LINELENGTH);
+		strncpy(pinput_string,argv[10],LINELENGTH);
 		noise_amp = atof(pinput_string);
 		
-		strncpy(pnoise_location_string,argv[10],LINELENGTH);
+		strncpy(pnoise_location_string,argv[11],LINELENGTH);
 		remove_carriage_return(pnoise_location_string);
 	
-		strncpy(pinput_string,argv[11],LINELENGTH);
+		strncpy(pinput_string,argv[12],LINELENGTH);
 		strcpy(pnoise_type_string,pinput_string);
 	
-		strncpy(pinput_string,argv[12],LINELENGTH);
+		strncpy(pinput_string,argv[13],LINELENGTH);
 		noise_bandwidth_Hz = atof(pinput_string);
 	
-		strncpy(pinput_string,argv[13],LINELENGTH);
+		strncpy(pinput_string,argv[14],LINELENGTH);
 		strcpy(pmodulation_type_string,pinput_string);
 		}
 	else
@@ -237,27 +248,33 @@ else
 	
 		strncpy(pinput_string,argv[5],LINELENGTH);
 		duty_cycle_percent = atof(pinput_string);
-		
+
 		strncpy(pinput_string,argv[6],LINELENGTH);
+		vout_bandwidth_multiplier = atof(pinput_string);
+			
+		strncpy(pinput_string,argv[7],LINELENGTH);
 		num_points_per_period = atol(pinput_string);
 	
-		strncpy(pinput_string,argv[7],LINELENGTH);
+		strncpy(pinput_string,argv[8],LINELENGTH);
 		num_periods  = atol(pinput_string);
 	
-		strncpy(pinput_string,argv[8],LINELENGTH);
+		strncpy(pinput_string,argv[9],LINELENGTH);
 		num_periods_to_plot = atol(pinput_string);
 		
 		noise_amp = 0.0;
    	}
 		
-	if (check_inputs(freq_Hz,ttran_rise_percent,ttran_fall_percent,duty_cycle_percent,noise_amp,noise_bandwidth_Hz,
-	num_points_per_period,num_periods_to_plot,num_periods,pnoise_type_string,&noise_type,pnoise_location_string,&noise_location,
+	if (check_inputs(freq_Hz,ttran_rise_percent,ttran_fall_percent,duty_cycle_percent,vout_bandwidth_multiplier,noise_amp,noise_bandwidth_Hz,num_points_per_period,num_periods_to_plot,num_periods,pnoise_type_string,&noise_type,pnoise_location_string,&noise_location,
 	pmodulation_type_string,&modulation_type,init_phase_degrees,&init_phase_rad) != EXIT_SUCCESS)
 			{
 			printf("Correct inputs and try again...\n");
 			exit(0);
 			}
-	
+	if (vout_bandwidth_multiplier > 0.0)
+		tau_vout_sec = 1.0/(2.0*pi*vout_bandwidth_multiplier*freq_Hz);
+	else
+		tau_vout_sec = 0.0;
+		
 	/* Compute sinusoidal threshold based on 3rd order polynomial */
 		
 		vthreshold = 0.0;
@@ -273,6 +290,7 @@ else
 	printf("Rise time = %.1f%% of period\n",ttran_rise_percent);
 	printf("Fall time = %.1f%% of period\n",ttran_fall_percent);
 	printf("Duty cycle = %.1f%% of period\n",duty_cycle_percent);
+	printf("Square wave RC filter bandwidth multiplier = %.2f\n",vout_bandwidth_multiplier);
 	printf("num_points_per_period = %ld\n",num_points_per_period);
 	printf("num_periods = %ld\n",num_periods);
 	printf("num_periods_to_plot = %ld\n",num_periods_to_plot);
@@ -420,6 +438,11 @@ else
 		if( (vout = (double *) calloc(num_points_per_period*(num_periods + 1) + 1,sizeof(double))) == NULL)
 			{
 			printf("Error allocating memory to vout!\n");
+			exit(0);
+			}
+		if( (vout_filtered = (double *) calloc(num_points_per_period*(num_periods + 1) + 1,sizeof(double))) == NULL)
+			{
+			printf("Error allocating memory to vout_filtered!\n");
 			exit(0);
 			}
 		if( (am_noise = (double *) calloc(num_points_per_period*(num_periods + 1) + 1,sizeof(double))) == NULL)
@@ -625,7 +648,8 @@ else
 		}
 	#ifdef DEBUG_DUTY_CYCLE
 		FILE *fp_du;
-		fp_du = fopen("duty_cycle.csv","w");
+		sprintf(pinput_string,"duty_cycle_%s.csv",ptimestamp);
+		fp_du = fopen(pinput_string,"w");
 		for (i = 0; i < (num_crossings -1);i++)
 			fprintf(fp_du,"%ld,%.6f,%1.12e,%1.12e\n",i,duty_cycle[i],vth_cross_rise[i],vth_cross_fall[i]);
 		fclose(fp_du);
@@ -672,7 +696,17 @@ else
 	
 	/* Remove first period since its initial transition time was not set to ttran_rise nor ttran_fall */
 	/* Apply AM modulation to signals */
-	
+	FILE *fpw4;
+	sprintf(pinput_string,"vout_filtered_%s.csv",ptimestamp);
+	fpw4 = fopen(pinput_string,"w");
+	if (tau_vout_sec != 0.0)
+		{
+		fprintf(fpw4,"Time (s),vout (V),vout_filtered (V) tau = %1.6e ps (%.3f GHz)\n",tau_vout_sec/1e-12,1e-09/(2.0*pi*tau_vout_sec));
+		}
+	else
+		{
+		fprintf(fpw4,"Time (s),vout (V),vout_filtered (V) tau = infinite (no bandlimiting)\n");
+		}
 	j = 0;
 	for (i = 0; i < num_points_per_period*(num_periods + 1); i++)
 		{
@@ -682,17 +716,44 @@ else
 			vsin_pm[j] = vsin_pm[i]*(1.0 + am_noise[i]);
 			vsq[j] = vsq[i]*(1.0 + am_noise[i]);
 			vout[j] = vout[i]*(1.0 + am_noise[i]);
+			if (j > 0)
+				{
+				if (tau_vout_sec != 0.0)
+					{
+					if(rkstep1(time_sec[j - 1],time_sec[j],tau_vout_sec,
+		   		vout[j],&vout_filtered_cap,5,-5,errmax,MAX_ITERATIONS) == 1)
+	         		{
+	         		printf("Error in runge-kutta routine for RC filtered vout, program exits!\n");
+	         		exit(0);
+	         		}
+	         	}
+	         else
+	         	{
+	         	vout_filtered_cap = vout[j];
+	         	}
+	         }
+	      else
+	      	vout_filtered_cap = vout[j];
+	      vout_filtered[j] = vout_filtered_cap;
+	      fprintf(fpw4,"%1.12e,%1.12e,%1.12e\n",time_sec[j],vout[j],vout_filtered[j]);
 			j++;
 			}
 		}
+	fclose(fpw4);
 	for (i = j; i < j + num_points_per_period;i++)
 		{
 		time_sec[i] = time_sec[j - 1];
 		vsin_pm[i] = vsin_pm[j - 1]*(1.0 + am_noise[j - 1]);
 		vsq[i] = vsq[j - 1]*(1.0 + am_noise[j - 1]);
 		vout[i] = vout[j - 1]*(1.0 + am_noise[j - 1]);
+		vout_filtered[i] = vout_filtered[j - 1];
 		}
-	
+#ifdef FILTER_VOUT	
+	for (i = 0; i < j + num_points_per_period;i++)
+		{
+		vout[i] = vout_filtered[i];
+		}
+#endif
 	/*---------------------------------------*/
 	
 	      
@@ -700,9 +761,23 @@ else
 	
 	fpw1 = fopen(pfnameout,"w");
 	#ifdef DEBUG_SQUARE_WAVE
-	   fprintf(fpw1,"Time (sec),vsin (V),vsin_pm (V),vsq (V),vout (V)\n");
+		if (tau_vout_sec != 0.0)
+			{
+	   	fprintf(fpw1,"Time (sec),vsin (V),vsin_pm (V),vsq (V),vout (V),vout_filtered (V) tau = %1.6e ps (%.3f GHz)\n",tau_vout_sec/1e-12,1e-09/(2.0*pi*tau_vout_sec));
+	   	}
+	   else
+			{
+			ffprintf(fpw1,"Time (sec),vsin (V),vsin_pm (V),vsq (V),vout (V),vout_filtered (V) tau = infinite (no bandlimiting)\n");
+			}
 	#else
-	   fprintf(fpw1,"Time (sec),vout (V)\n");
+		if (tau_vout_sec != 0.0)
+			{
+	   	fprintf(fpw1,"Time (sec),vout (V),vout_filtered (V) tau = %1.6e ps (%.3f GHz)\n",tau_vout_sec/1e-12,1e-09/(2.0*pi*tau_vout_sec));
+	   	}
+	   else
+			{
+			fprintf(fpw4,"Time (s),vout (V),vout_filtered (V) tau = infinite (no bandlimiting)\n");
+			}	   
 	#endif
 	
 	/*Set counter to determine number of printed points (time_point_counter) */
@@ -718,9 +793,9 @@ else
 	   if (((prtime - time_sec[i]) < delta_time) && (fabs(prtime - time_sec[i]) <= fabs(prtime - time_sec[i + 1])))
 	      {
 	      #ifdef DEBUG_SQUARE_WAVE
-	   		sprintf(pline1,"%1.12e,%1.12e,%1.12e,%1.12e,%1.12e\n",time_sec[i],vsin[i],vsin_pm[i],vsq[i],vout[i]);
+	   		sprintf(pline1,"%1.12e,%1.12e,%1.12e,%1.12e,%1.12e,%1.12e\n",time_sec[i],vsin[i],vsin_pm[i],vsq[i],vout[i],vout_filtered[i]);
 	      #else
-	      	sprintf(pline1,"%1.12e,%1.12e\n",time_sec[i],vout[i]);
+	      	sprintf(pline1,"%1.12e,%1.12e,%1.12e\n",time_sec[i],vout[i],vout_filtered[i]);
 	      #endif
 			fprintf(fpw1,"%s",pline1);
 	      ++time_point_counter;
@@ -764,9 +839,9 @@ else
 		sprintf(pinput_string,"tail -%ld %s >> ./.tempfile0\n",5*num_points_per_period,pfnameout);
 		system(pinput_string);
 		#ifdef DEBUG_SQUARE_WAVE
-			sprintf(poctave_command_1,"gnuplot -c /Users/sml/cproj/vpulse/vpulse_v1p7_092223/plotting_routines/gnuplot/gnu_plot_debug.gnu \'./.tempfile0' \'%s\' \'%s\'\n",ptitle_string,ptimestamp);
+			sprintf(poctave_command_1,"gnuplot -c /Users/sml/cproj/vpulse/vpulse_v1p9_100123/plotting_routines/gnuplot/gnu_plot_debug.gnu \'./.tempfile0' \'%s\' \'%s\'\n",ptitle_string,ptimestamp);
 		#else
-			sprintf(poctave_command_1,"gnuplot -c /Users/sml/cproj/vpulse/vpulse_v1p7_092223/plotting_routines/gnuplot/gnu_plot.gnu \'./.tempfile0' \'%s\' \'%s\'\n",ptitle_string,ptimestamp);
+			sprintf(poctave_command_1,"gnuplot -c /Users/sml/cproj/vpulse/vpulse_v1p9_100123/plotting_routines/gnuplot/gnu_plot.gnu \'./.tempfile0' \'%s\' \'%s\'\n",ptitle_string,ptimestamp);
 		#endif
 
 		system(poctave_command_1);
@@ -814,7 +889,7 @@ else
 			else
 				sprintf(pfnameout_jitter,"vout_%.0fmeg_ttran_rise_%.0f_fall_%.0f_percent_du_%.0f_noise_amp_%.0fm_jitter_%s.csv",
 			freq_Hz/1e6,ttran_rise_percent,ttran_fall_percent,duty_cycle_percent,noise_amp/1e-03,ptimestamp);
-			sprintf(pinput_string,"jitterhistv15_col %s 2 %s %.4e 0.50 %d y n %.4e\n",
+			sprintf(pinput_string,"jitterhistv15_col %s 3 %s %.4e 0.50 %d y n %.4e\n",
 			pfname_vout,pfnameout_jitter,1e-09/delta_time,num_samples_moving_average,1e-06*freq_Hz);
 			system(pinput_string);
 			}

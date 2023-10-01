@@ -11,15 +11,17 @@
 /* #define DEBUG_NOISE
 #define DEBUG_DUTY_CYCLE
 #define COMPUTE_JITTER
-#define DEBUG_SQUARE_WAVE */
+#define DEBUG_SQUARE_WAVE
+#define FILTER_VOUT */
 
+#define VOUT_BANDWIDTH_MULTIPLIER 50.0
+#define MAXIMUM_BANDWIDTH_MULTIPLIER 50.0
 #define COMPUTE_JITTER
-
 
 /*Add #defines for version number*/
 
-#define VERSION_NUMBER	1.7
-#define VERSION_DATE "9/22/2023"
+#define VERSION_NUMBER	1.9
+#define VERSION_DATE "10/1/2023"
 
 /* Add #defines for minimum number of points per period based on transition */
 /* times and duty cycle */
@@ -100,7 +102,7 @@ int check_executable(char *pprogram_executable,char *preturn_string);
 int double_compare(const void* a, const void* b);
 int parsestring_to_doubles_array(char *pinput_string,double *pdoubles_array,int *parray_size,int max_array_size);
 double mean(double *x, long int N);
-int check_inputs(double freq_Hz,double ttran_rise_percent,double ttran_fall_percent,double duty_cycle_percent, double noise_amp, double noise_bandwidth_Hz, long int num_points_per_period, long int num_periods_to_plot, long int num_periods, char * pnoise_type_string, int *noise_type, char *pnoise_location_string, int *noise_location, char * pmodulation_type_string, int *modulation_type, double init_phase_degrees, double *init_phase_rad);
+int check_inputs(double freq_Hz,double ttran_rise_percent,double ttran_fall_percent,double duty_cycle_percent, double vout_bandwidth_multiplier, double noise_amp, double noise_bandwidth_Hz, long int num_points_per_period, long int num_periods_to_plot, long int num_periods, char * pnoise_type_string, int *noise_type, char *pnoise_location_string, int *noise_location, char * pmodulation_type_string, int *modulation_type, double init_phase_degrees, double *init_phase_rad);
 
 /*Functions used to compute derivatives of diff equations*/
 
