@@ -95,7 +95,7 @@ pgnuplot_path = &gnuplot_path[0];
 pgimp_path = &gimp_path[0];
 pjitterhistv15_col_path = &jitterhistv15_col_path[0];
 
-printf("\nvpulse v%.3f %s\n\n",VERSION_NUMBER,VERSION_DATE);
+printf("\nvpulse v%.2f %s\n\n",VERSION_NUMBER,VERSION_DATE);
 
 if ((argc != 15) && (argc != 10))
 	{
@@ -696,17 +696,6 @@ else
 	
 	/* Remove first period since its initial transition time was not set to ttran_rise nor ttran_fall */
 	/* Apply AM modulation to signals */
-	FILE *fpw4;
-	sprintf(pinput_string,"vout_filtered_%s.csv",ptimestamp);
-	fpw4 = fopen(pinput_string,"w");
-	if (tau_vout_sec != 0.0)
-		{
-		fprintf(fpw4,"Time (s),vout (V),vout_filtered (V) tau = %1.6e ps (%.3f GHz)\n",tau_vout_sec/1e-12,1e-09/(2.0*pi*tau_vout_sec));
-		}
-	else
-		{
-		fprintf(fpw4,"Time (s),vout (V),vout_filtered (V) tau = infinite (no bandlimiting)\n");
-		}
 	j = 0;
 	for (i = 0; i < num_points_per_period*(num_periods + 1); i++)
 		{
@@ -735,11 +724,9 @@ else
 	      else
 	      	vout_filtered_cap = vout[j];
 	      vout_filtered[j] = vout_filtered_cap;
-	      fprintf(fpw4,"%1.12e,%1.12e,%1.12e\n",time_sec[j],vout[j],vout_filtered[j]);
 			j++;
 			}
 		}
-	fclose(fpw4);
 	for (i = j; i < j + num_points_per_period;i++)
 		{
 		time_sec[i] = time_sec[j - 1];
@@ -763,20 +750,20 @@ else
 	#ifdef DEBUG_SQUARE_WAVE
 		if (tau_vout_sec != 0.0)
 			{
-	   	fprintf(fpw1,"Time (sec),vsin (V),vsin_pm (V),vsq (V),vout (V),vout_filtered (V) tau = %1.6e ps (%.3f GHz)\n",tau_vout_sec/1e-12,1e-09/(2.0*pi*tau_vout_sec));
+	   	fprintf(fpw1,"Time (sec),vsin (V),vsin_pm (V),vsq (V),vout (V),vout filtered (V) tau = %s (%s)\n",add_units(tau_vout_sec,3,"s",value_string[0]),add_units(1.0/(2.0*pi*tau_vout_sec),2,"Hz",value_string[1]));
 	   	}
 	   else
 			{
-			ffprintf(fpw1,"Time (sec),vsin (V),vsin_pm (V),vsq (V),vout (V),vout_filtered (V) tau = infinite (no bandlimiting)\n");
+			fprintf(fpw1,"Time (sec),vsin (V),vsin_pm (V),vsq (V),vout (V),vout filtered (V) tau = infinite (no bandlimiting)\n");
 			}
 	#else
 		if (tau_vout_sec != 0.0)
 			{
-	   	fprintf(fpw1,"Time (sec),vout (V),vout_filtered (V) tau = %1.6e ps (%.3f GHz)\n",tau_vout_sec/1e-12,1e-09/(2.0*pi*tau_vout_sec));
+			fprintf(fpw1,"Time (s),vout (V),vout filtered (V) tau = %s (%s)\n",add_units(tau_vout_sec,3,"s",value_string[0]),add_units(1.0/(2.0*pi*tau_vout_sec),3,"Hz",value_string[1]));
 	   	}
 	   else
 			{
-			fprintf(fpw4,"Time (s),vout (V),vout_filtered (V) tau = infinite (no bandlimiting)\n");
+			fprintf(fpw1,"Time (s),vout (V),vout filtered (V) tau = infinite (no bandlimiting)\n");
 			}	   
 	#endif
 	
@@ -826,22 +813,31 @@ else
 		if (noise_amp != 0.0)
 			{
 			if (noise_type != SINUSOIDAL_NOISE)
-				sprintf(ptitle_string,"Input %s Square Wave (Du = %.1f %%, trf = %.1f %% of period) and Modulated Noise\nnoise\\_amp = %s, noise bandwidth = %s, sampling frequency = %s",add_units(freq_Hz,2,"Hz",value_string[0]),duty_cycle_percent,ttran_rise_percent,add_units(noise_amp,2,"V",value_string[1]),add_units(noise_bandwidth_Hz,2,"Hz",value_string[2]),add_units(1.0/delta_time,2,"Hz",value_string[3]));
+				{
+				if ( noise_type == GAUSSIAN_NOISE)
+					{
+					sprintf(ptitle_string,"{/:Bold %s Square Wave (Du = %.1f%%, tr = %.1f%%, tf = %.1f%%) Amplitude Modulated by Gaussian Random Noise}\n{/:Bold modulation index (3 sigma) = %s, noise bandwidth = %s, sampling frequency = %s}",add_units(freq_Hz,2,"Hz",value_string[0]),duty_cycle_percent,ttran_rise_percent,ttran_fall_percent,add_units(noise_amp,1,"%",value_string[1]),add_units(noise_bandwidth_Hz,2,"Hz",value_string[2]),add_units(1.0/delta_time,2,"Hz",value_string[3]));
+					}
+				else
+					{
+					sprintf(ptitle_string,"{/:Bold %s Square Wave (Du = %.1f%%, tr = %.1f%%, tf = %.1f%%) Amplitude Modulated by Uniform Random Noise}\n{/:Bold modulation index (range/2) = %s, noise bandwidth = %s, sampling frequency = %s}",add_units(freq_Hz,2,"Hz",value_string[0]),duty_cycle_percent,ttran_rise_percent,ttran_fall_percent,add_units(noise_amp,1,"%",value_string[1]),add_units(noise_bandwidth_Hz,2,"Hz",value_string[2]),add_units(1.0/delta_time,2,"Hz",value_string[3]));
+					}
+				}
 			else
-				sprintf(ptitle_string,"Input %s Square Wave (Du = %.1f %%, trf = %.1f %% of period) with Sinusoidal Modulation\nModulation amplitude = %s, modulation frequency = %s, sampling frequency = %s",add_units(freq_Hz,2,"Hz",value_string[0]),duty_cycle_percent,ttran_rise_percent,add_units(noise_amp,2,"V",value_string[1]),add_units(noise_bandwidth_Hz,2,"Hz",value_string[2]),add_units(1.0/delta_time,2,"Hz",value_string[3]));
+				sprintf(ptitle_string,"{/:Bold %s Square Wave (Du = %.1f%%, tr = %.1f%%, tf = %.1f%%) Amplitude Modulated by Sinusoidal Signal}\n{/:Bold modulation index = %s, modulation frequency = %s, sampling frequency = %s}",add_units(freq_Hz,2,"Hz",value_string[0]),duty_cycle_percent,ttran_rise_percent,ttran_fall_percent,add_units(noise_amp,1,"%",value_string[1]),add_units(noise_bandwidth_Hz,2,"Hz",value_string[2]),add_units(1.0/delta_time,2,"Hz",value_string[3]));
 			}
 		else
-			sprintf(ptitle_string,"Input %s Square Wave (Du = %.1f %%, trf = %.1f %% of period)\nsampling frequency = %s",add_units(freq_Hz,2,"Hz",value_string[0]),duty_cycle_percent,ttran_rise_percent,add_units(1.0/delta_time,2,"Hz",value_string[3]));
+			sprintf(ptitle_string,"{/:Bold %s Square Wave (Du = %.1f%%, tr = %.1f%%, tf = %.1f%%)}\n{/:Bold sampling frequency = %s}",add_units(freq_Hz,2,"Hz",value_string[0]),duty_cycle_percent,ttran_rise_percent,ttran_fall_percent,add_units(1.0/delta_time,2,"Hz",value_string[3]));
 		
-	
 		sprintf(pinput_string,"head -1 %s > ./.tempfile0\n",pfnameout);
 		system(pinput_string);
 		sprintf(pinput_string,"tail -%ld %s >> ./.tempfile0\n",5*num_points_per_period,pfnameout);
 		system(pinput_string);
+		strcpy(pinput_string,"./.tempfile0");
 		#ifdef DEBUG_SQUARE_WAVE
-			sprintf(poctave_command_1,"gnuplot -c /Users/sml/cproj/vpulse/vpulse_v1p9_100123/plotting_routines/gnuplot/gnu_plot_debug.gnu \'./.tempfile0' \'%s\' \'%s\'\n",ptitle_string,ptimestamp);
+			sprintf(poctave_command_1,"gnuplot -e 'input_filename = \"%s\"; plot_title = \"%s\"; timestamp = \"%s\";' /Users/sml/cproj/vpulse/vpulse_v1p91_100223/plotting_routines/gnuplot/gnu_plot_debug.gnu \n",pinput_string,ptitle_string,ptimestamp);
 		#else
-			sprintf(poctave_command_1,"gnuplot -c /Users/sml/cproj/vpulse/vpulse_v1p9_100123/plotting_routines/gnuplot/gnu_plot.gnu \'./.tempfile0' \'%s\' \'%s\'\n",ptitle_string,ptimestamp);
+			sprintf(poctave_command_1,"gnuplot -e 'input_filename = \"%s\"; plot_title = \"%s\"; timestamp = \"%s\";' /Users/sml/cproj/vpulse/vpulse_v1p91_100223/plotting_routines/gnuplot/gnu_plot.gnu \n",pinput_string,ptitle_string,ptimestamp);
 		#endif
 
 		system(poctave_command_1);
@@ -851,10 +847,12 @@ else
 			system(poctave_command_2);
 			}
 		system("rm ./.tempfile0");
-		sprintf(pinput_string,"gnuplot_comamnd_%s.txt",ptimestamp);
+		
+/*		sprintf(pinput_string,"gnuplot_command_%s.txt",ptimestamp);
 		fpw1 = fopen(pinput_string,"w");
 		fprintf(fpw1,"%s",poctave_command_1);
-		fclose(fpw1);
+		fclose(fpw1);*/
+		
 		}
 	
 	/* Create temporary file with vout data to take psd */

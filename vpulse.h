@@ -20,8 +20,8 @@
 
 /*Add #defines for version number*/
 
-#define VERSION_NUMBER	1.9
-#define VERSION_DATE "10/1/2023"
+#define VERSION_NUMBER	1.91
+#define VERSION_DATE "10/2/2023"
 
 /* Add #defines for minimum number of points per period based on transition */
 /* times and duty cycle */
