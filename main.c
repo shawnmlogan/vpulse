@@ -816,15 +816,15 @@ else
 				{
 				if ( noise_type == GAUSSIAN_NOISE)
 					{
-					sprintf(ptitle_string,"{/:Bold %s Square Wave (Du = %.1f%%, tr = %.1f%%, tf = %.1f%%) Amplitude Modulated by Gaussian Random Noise}\n{/:Bold modulation index (3 sigma) = %s, noise bandwidth = %s, sampling frequency = %s}",add_units(freq_Hz,2,"Hz",value_string[0]),duty_cycle_percent,ttran_rise_percent,ttran_fall_percent,add_units(noise_amp,1,"%",value_string[1]),add_units(noise_bandwidth_Hz,2,"Hz",value_string[2]),add_units(1.0/delta_time,2,"Hz",value_string[3]));
+					sprintf(ptitle_string,"{/:Bold %s Square Wave (Du = %.1f%%, tr = %.1f%%, tf = %.1f%%) Amplitude Modulated by Gaussian Random Noise}\n{/:Bold modulation index (3 sigma) = %s, noise bandwidth = %s, sampling frequency = %s}",add_units(freq_Hz,2,"Hz",value_string[0]),duty_cycle_percent,ttran_rise_percent,ttran_fall_percent,add_units(noise_amp,1,"",value_string[1]),add_units(noise_bandwidth_Hz,2,"Hz",value_string[2]),add_units(1.0/delta_time,2,"Hz",value_string[3]));
 					}
 				else
 					{
-					sprintf(ptitle_string,"{/:Bold %s Square Wave (Du = %.1f%%, tr = %.1f%%, tf = %.1f%%) Amplitude Modulated by Uniform Random Noise}\n{/:Bold modulation index (range/2) = %s, noise bandwidth = %s, sampling frequency = %s}",add_units(freq_Hz,2,"Hz",value_string[0]),duty_cycle_percent,ttran_rise_percent,ttran_fall_percent,add_units(noise_amp,1,"%",value_string[1]),add_units(noise_bandwidth_Hz,2,"Hz",value_string[2]),add_units(1.0/delta_time,2,"Hz",value_string[3]));
+					sprintf(ptitle_string,"{/:Bold %s Square Wave (Du = %.1f%%, tr = %.1f%%, tf = %.1f%%) Amplitude Modulated by Uniform Random Noise}\n{/:Bold modulation index (range/2) = %s, noise bandwidth = %s, sampling frequency = %s}",add_units(freq_Hz,2,"Hz",value_string[0]),duty_cycle_percent,ttran_rise_percent,ttran_fall_percent,add_units(noise_amp,1,"",value_string[1]),add_units(noise_bandwidth_Hz,2,"Hz",value_string[2]),add_units(1.0/delta_time,2,"Hz",value_string[3]));
 					}
 				}
 			else
-				sprintf(ptitle_string,"{/:Bold %s Square Wave (Du = %.1f%%, tr = %.1f%%, tf = %.1f%%) Amplitude Modulated by Sinusoidal Signal}\n{/:Bold modulation index = %s, modulation frequency = %s, sampling frequency = %s}",add_units(freq_Hz,2,"Hz",value_string[0]),duty_cycle_percent,ttran_rise_percent,ttran_fall_percent,add_units(noise_amp,1,"%",value_string[1]),add_units(noise_bandwidth_Hz,2,"Hz",value_string[2]),add_units(1.0/delta_time,2,"Hz",value_string[3]));
+				sprintf(ptitle_string,"{/:Bold %s Square Wave (Du = %.1f%%, tr = %.1f%%, tf = %.1f%%) Amplitude Modulated by Sinusoidal Signal}\n{/:Bold modulation index = %s, modulation frequency = %s, sampling frequency = %s}",add_units(freq_Hz,2,"Hz",value_string[0]),duty_cycle_percent,ttran_rise_percent,ttran_fall_percent,add_units(noise_amp,1,"",value_string[1]),add_units(noise_bandwidth_Hz,2,"Hz",value_string[2]),add_units(1.0/delta_time,2,"Hz",value_string[3]));
 			}
 		else
 			sprintf(ptitle_string,"{/:Bold %s Square Wave (Du = %.1f%%, tr = %.1f%%, tf = %.1f%%)}\n{/:Bold sampling frequency = %s}",add_units(freq_Hz,2,"Hz",value_string[0]),duty_cycle_percent,ttran_rise_percent,ttran_fall_percent,add_units(1.0/delta_time,2,"Hz",value_string[3]));
