@@ -11,7 +11,7 @@ char value_string[NUMBER_OF_VALUE_STRINGS][LINELENGTH_OF_VALUE_STRING + 1];
    	return_status = EXIT_FAILURE;
    	}
 
-*init_phase_rad = init_phase_degrees*180.0/pi;
+*init_phase_rad = init_phase_degrees*pi/180.0;
 		
 if ((ttran_rise_percent <= 0.0) || (ttran_rise_percent >= 50.0))
    	{

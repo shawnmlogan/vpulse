@@ -835,9 +835,9 @@ else
 		system(pinput_string);
 		strcpy(pinput_string,"./.tempfile0");
 		#ifdef DEBUG_SQUARE_WAVE
-			sprintf(poctave_command_1,"gnuplot -e 'input_filename = \"%s\"; plot_title = \"%s\"; timestamp = \"%s\";' /Users/sml/cproj/vpulse/vpulse_v1p91_100223/plotting_routines/gnuplot/gnu_plot_debug.gnu \n",pinput_string,ptitle_string,ptimestamp);
+			sprintf(poctave_command_1,"gnuplot -e 'input_filename = \"%s\"; plot_title = \"%s\"; timestamp = \"%s\";' /Users/sml/cproj/vpulse/vpulse_v1p93_100623/plotting_routines/gnuplot/gnu_plot_debug.gnu \n",pinput_string,ptitle_string,ptimestamp);
 		#else
-			sprintf(poctave_command_1,"gnuplot -e 'input_filename = \"%s\"; plot_title = \"%s\"; timestamp = \"%s\";' /Users/sml/cproj/vpulse/vpulse_v1p91_100223/plotting_routines/gnuplot/gnu_plot.gnu \n",pinput_string,ptitle_string,ptimestamp);
+			sprintf(poctave_command_1,"gnuplot -e 'input_filename = \"%s\"; plot_title = \"%s\"; timestamp = \"%s\";' /Users/sml/cproj/vpulse/vpulse_v1p93_100623/plotting_routines/gnuplot/gnu_plot.gnu \n",pinput_string,ptitle_string,ptimestamp);
 		#endif
 
 		system(poctave_command_1);
