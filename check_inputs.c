@@ -13,33 +13,33 @@ char value_string[NUMBER_OF_VALUE_STRINGS][LINELENGTH_OF_VALUE_STRING + 1];
 
 *init_phase_rad = init_phase_degrees*pi/180.0;
 		
-if ((ttran_rise_percent <= 0.0) || (ttran_rise_percent >= 50.0))
+if (ttran_rise_percent <= 0.0)
    	{
-   	printf("Enter rise time greater than 0 %% and less than 50%% of period, read value of %1.2e.\n",ttran_rise_percent);
+   	printf("Enter rise time greater than 0 %%, read value of %1.2e.\n",ttran_rise_percent);
    	return_status = EXIT_FAILURE;
    	}
    	
-if ((ttran_fall_percent <= 0.0) || (ttran_fall_percent >= 50.0))
+if (ttran_fall_percent <= 0.0)
    	{
-   	printf("Enter fall time greater than 0 %% and less than 50%% of period, read value of %1.2e.\n",ttran_fall_percent);
+   	printf("Enter fall time greater than 0 %%, read value of %1.2e.\n",ttran_fall_percent);
    	return_status = EXIT_FAILURE;
    	}
 
-if (((ttran_rise_percent * (double) num_points_per_period/100.0) < MIN_NUM_POINTS_PER_TRANSIION) || ((ttran_fall_percent * (double) num_points_per_period/100.0) < MIN_NUM_POINTS_PER_TRANSIION))
+if (((ttran_rise_percent * (double) num_points_per_period/100.0) < MIN_NUM_POINTS_PER_TRANSIIION) || ((ttran_fall_percent * (double) num_points_per_period/100.0) < MIN_NUM_POINTS_PER_TRANSIIION))
    	{
    	if (ttran_rise_percent <= ttran_fall_percent)
    		{
    		printf("Insufficient number of points per waveforms specified for rise transition time of %s.\n",
    		add_units(ttran_rise_percent,1,"%",value_string[0]));
    		printf("Enter at least %.0f number of points per period.\n",
-   		ceil(100.0* (double) MIN_NUM_POINTS_PER_TRANSIION/ttran_rise_percent));
+   		ceil(100.0* (double) MIN_NUM_POINTS_PER_TRANSIIION/ttran_rise_percent));
    		}
    	else
    		{
    		printf("Insufficient number of points per waveforms specified for fall transition time of %s .\n",
    		add_units(ttran_fall_percent,1,"%",value_string[0]));
    		printf("Enter at least %.0f number of points per period.\n",
-   		ceil(100.0* (double) MIN_NUM_POINTS_PER_TRANSIION/ttran_fall_percent));
+   		ceil(100.0* (double) MIN_NUM_POINTS_PER_TRANSIIION/ttran_fall_percent));
    		}
    	return_status = EXIT_FAILURE;
    	}
@@ -58,23 +58,9 @@ if ((duty_cycle_percent * (double) num_points_per_period/100.0) < MIN_NUM_POINTS
    	ceil(100.0* (double) MIN_NUM_POINTS_PER_ONTIME/duty_cycle_percent));
    	}
 
-if ((duty_cycle_percent + ttran_rise_percent + ttran_fall_percent) > 100.0)
+if ((duty_cycle_percent + ttran_rise_percent/2.0 + ttran_fall_percent/2.0) > 100.0)
    	{
    	printf("Sum of rise time (%.2f), fall time (%.2f), and duty cycle (%.2f) exceeds 100%%.\n",
-   	ttran_rise_percent,ttran_fall_percent,duty_cycle_percent);
-   	return_status = EXIT_FAILURE;
-   	}
-
-if ((duty_cycle_percent - (ttran_rise_percent + ttran_fall_percent)) < 0.0)
-   	{
-   	printf("Rise time (%.2f) and fall time (%.2f) and duty cycle (%.2f) will prevent waveform from achieving logic high.\n",
-   	ttran_rise_percent,ttran_fall_percent,duty_cycle_percent);
-   	return_status = EXIT_FAILURE;
-   	}
-
-if (((100.0 - duty_cycle_percent) - (ttran_rise_percent + ttran_fall_percent)) < 0.0)
-   	{
-   	printf("Rise time (%.2f) and fall time (%.2f) and duty cycle (%.2f) will prevent waveform from achieving logic low.\n",
    	ttran_rise_percent,ttran_fall_percent,duty_cycle_percent);
    	return_status = EXIT_FAILURE;
    	}
@@ -85,11 +71,22 @@ if ((vout_bandwidth_multiplier < 0.0) || (vout_bandwidth_multiplier > MAXIMUM_BA
 	printf(" greater or equal to 0 and less than or equal to %.0f).\n",MAXIMUM_BANDWIDTH_MULTIPLIER);
 	return_status = EXIT_FAILURE;
 	}
-	
-if (num_points_per_period <= 1)
-   {
-	printf("Enter more than 1 number of points per period, read value of %ld.\n",num_points_per_period);
-	return_status = EXIT_FAILURE;
+
+if (vout_bandwidth_multiplier != 0.0)
+	{
+	if (num_points_per_period <= 10.0*vout_bandwidth_multiplier)
+   	{
+		printf("Enter more than %.0f number of points per period, read value of %ld.\n",10.0*vout_bandwidth_multiplier,num_points_per_period);
+		return_status = EXIT_FAILURE;
+		}
+	}
+else
+	{
+	if (num_points_per_period <= MIN_NUM_POINTS_PER_PERIOD)
+   	{
+		printf("Enter more than %d number of points per period, read value of %ld.\n",MIN_NUM_POINTS_PER_PERIOD,num_points_per_period);
+		return_status = EXIT_FAILURE;
+		}
 	}
 
 if ((num_periods_to_plot > num_periods) || (num_periods_to_plot < 1))
@@ -111,7 +108,11 @@ if (noise_amp != 0.0)
    	printf("Enter non-zero and positive noise bandwidth in Hz, read value of %1.6e.\n",noise_bandwidth_Hz);
    	return_status = EXIT_FAILURE;
    	}
-		
+	if (1.0/(num_points_per_period*freq_Hz) > 1.0/(4.0*noise_bandwidth_Hz))
+   	{
+		printf("Enter more than %.0f number of points per period for noise bandwidth of %1.2e, read value of %ld.\n",4.0*noise_bandwidth_Hz/freq_Hz,noise_bandwidth_Hz,num_points_per_period);
+		return_status = EXIT_FAILURE;
+		}		
 	if (find_modulation_type(pmodulation_type_string,modulation_type) != EXIT_SUCCESS)
 		{
 		printf("Could not identify modulation type entry of \"%s\" as either AM or PM\n",pmodulation_type_string);

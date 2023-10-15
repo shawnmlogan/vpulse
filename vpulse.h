@@ -15,19 +15,20 @@
 #define FILTER_VOUT */
 
 #define VOUT_BANDWIDTH_MULTIPLIER 50.0
-#define MAXIMUM_BANDWIDTH_MULTIPLIER 50.0
+#define MAXIMUM_BANDWIDTH_MULTIPLIER 1000.0
 #define COMPUTE_JITTER
 
 /*Add #defines for version number*/
 
-#define VERSION_NUMBER	1.93
-#define VERSION_DATE "10/6/2023"
+#define VERSION_NUMBER	1.95
+#define VERSION_DATE "10/14/2023"
 
 /* Add #defines for minimum number of points per period based on transition */
 /* times and duty cycle */
 
-#define MIN_NUM_POINTS_PER_TRANSIION 10
+#define MIN_NUM_POINTS_PER_TRANSIIION 10
 #define MIN_NUM_POINTS_PER_ONTIME 10
+#define MIN_NUM_POINTS_PER_PERIOD 100
 
 /*Add #defines for noise type*/
 
@@ -92,8 +93,9 @@ typedef struct {
 
 /*Function prototypes*/
 
-
 char * add_units(double value,int num_digits,char *suffix,char *pvalue_string);
+char * add_units_underscore(double value,int num_digits,char *suffix,char *pvalue_string);
+char * add_units_underscore(double value,int num_digits,char *suffix,char *pvalue_string);
 void find_date(char *pdate_string,int max_characters);
 int find_timestamp(char *pdate_string,int max_characters);
 
