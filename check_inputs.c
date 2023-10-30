@@ -74,17 +74,20 @@ if ((vout_bandwidth_multiplier < 0.0) || (vout_bandwidth_multiplier > MAXIMUM_BA
 
 if (vout_bandwidth_multiplier != 0.0)
 	{
-	if (num_points_per_period <= 10.0*vout_bandwidth_multiplier)
+	if (num_points_per_period < 10.0*vout_bandwidth_multiplier)
    	{
-		printf("Enter more than %.0f number of points per period, read value of %ld.\n",10.0*vout_bandwidth_multiplier,num_points_per_period);
+		printf("Enter at least %.0f number of points per period to allow for\n",
+		10.0*vout_bandwidth_multiplier);
+		printf("output square wave RC filter bandwidth of %s, read value of %ld.\n",
+		add_units(vout_bandwidth_multiplier*freq_Hz,2,"Hz",value_string[0]),num_points_per_period);
 		return_status = EXIT_FAILURE;
 		}
 	}
 else
 	{
-	if (num_points_per_period <= MIN_NUM_POINTS_PER_PERIOD)
+	if (num_points_per_period < MIN_NUM_POINTS_PER_PERIOD)
    	{
-		printf("Enter more than %d number of points per period, read value of %ld.\n",MIN_NUM_POINTS_PER_PERIOD,num_points_per_period);
+		printf("Enter at least %d number of points per period, read value of %ld.\n",MIN_NUM_POINTS_PER_PERIOD,num_points_per_period);
 		return_status = EXIT_FAILURE;
 		}
 	}

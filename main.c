@@ -28,6 +28,7 @@ double coeffi[] = {9.726743609632e-01,4.212749865460e-03,-7.100201979438e-04,4.7
 double c0 = 2.555552820758e+01, m = 5.757636118011e-01;
 double errmax = 100.0;
 
+int l;
 int noise_type = GAUSSIAN_NOISE;
 int noise_location = ENTERED_NOISE_AMP_IS_FILTERED;
 int modulation_type = AM_MODULATION;
@@ -41,10 +42,11 @@ long int num_points_per_period, num_periods, num_periods_to_plot, num_crossings;
 long int length_vth_cross_rise = 0, length_vth_cross_fall = 0; 
 long int noise_counter = 0, time_point_counter;
 
+char base_filename[LINELENGTH + 1], *pbase_filename;
 char fnameout[LINELENGTH + 1], *pfnameout;
 char fname_vout[LINELENGTH + 1], *pfname_vout;
 char fnameout_jitter[LINELENGTH + 1], *pfnameout_jitter;
-char line1[LINELENGTH+1], *pline1, *pinput_string, input_string[LINELENGTH + 1];
+char line1[LINELENGTH+1], *pline1, *pinput_string, input_string[LINELENGTH + 1], *ptemp_string, temp_string[LINELENGTH + 1];
 char *pfreq_value, freq_value[LINELENGTH + 1], *pnoise_bandwidth_value, noise_bandwidth_value[LINELENGTH + 1];
 
 char *pnoise_type_string, noise_type_string[LINELENGTH+1];
@@ -53,6 +55,8 @@ char *pmodulation_type_string, modulation_type_string[LINELENGTH+1];
 xy_pair *pxy, *px1y1;
 char *plinear="linear";
 char *ptimestamp,timestamp[LINELENGTH + 1];
+char *pmodulation_string, modulation_string[LINELENGTH + 1];
+char *pnoise_prefix, noise_prefix[2];
 
 char fileout_octave_command_line[LINELENGTH+1], *pfileout_octave_command_line;
 
@@ -64,7 +68,7 @@ char *ptitle_string, title_string[LINELENGTH + 1];
 char *poctave = "octave",*poctave_path,octave_path[LINELENGTH + 1];
 char *pgnuplot = "gnuplot",*pgnuplot_path,gnuplot_path[LINELENGTH + 1];
 char *pgimp = "gimp",*pgimp_path,gimp_path[LINELENGTH + 1];
-char *pjitterhistv15_col = "jitterhistv15_col",*pjitterhistv15_col_path,jitterhistv15_col_path[LINELENGTH + 1];
+char *pjitterhistv16 = "jitterhistv16",*pjitterhistv16_path,jitterhistv16_path[LINELENGTH + 1];
 char *ppsd_sppowr = "psd_sppowr",*ppsd_sppowr_path,psd_sppowr_path[LINELENGTH + 1];
 char plot_preference[LINELENGTH + 1];
 
@@ -77,6 +81,7 @@ pi = 2.0 * asin(1.0);
 
 /*Initialize pointers*/
 
+pbase_filename = &base_filename[0];
 pfnameout = &fnameout[0];
 pfname_vout = &fname_vout[0];
 pfnameout_jitter = &fnameout_jitter[0];
@@ -87,9 +92,12 @@ pfileout_octave_command_line = &fileout_octave_command_line[0];
 pline1 = &line1[0];
 ptimestamp = &timestamp[0];
 pinput_string = &input_string[0];
+ptemp_string = &temp_string[0];
 pmodulation_type_string = &modulation_type_string[0];
+pmodulation_string = &modulation_string[0];
 pnoise_type_string = &noise_type_string[0];
 pnoise_location_string = &noise_location_string[0];
+pnoise_prefix = &noise_prefix[0];
 
 poctave_command_1 = &octave_command_1[0];
 poctave_command_2 = &octave_command_2[0];
@@ -98,13 +106,17 @@ ptitle_string = &title_string[0];
 poctave_path = &octave_path[0];
 pgnuplot_path = &gnuplot_path[0];
 pgimp_path = &gimp_path[0];
-pjitterhistv15_col_path = &jitterhistv15_col_path[0];
+pjitterhistv16_path = &jitterhistv16_path[0];
 ppsd_sppowr_path = &psd_sppowr_path[0];
 
 printf("\nvpulse v%.2f %s\n\n",VERSION_NUMBER,VERSION_DATE);
 
 if ((argc != 15) && (argc != 10))
 	{
+	for (i = 0;i<argc;i++)
+		{
+		printf("Argument %ld: %s\n",i,argv[i]);
+		}
 	printf("Detected %d arguments for command line use of \"vpulse\"!\n\n",argc);
 	printf("If the waveform is not amplitude or phase modulated, 9 arguments are required.\n\n");
 	printf("Usage with command line:\nvpulse <input_square_wave_freq_hz> <initial_phase (degrees)>\n");
@@ -276,6 +288,11 @@ else
 			printf("Correct inputs and try again...\n");
 			exit(0);
 			}
+
+	/* Set seed for random number generators */
+
+	seed = time(NULL);
+
 	if (vout_bandwidth_multiplier > 0.0)
 		tau_vout_sec = 1.0/(2.0*pi*vout_bandwidth_multiplier*freq_Hz);
 	else
@@ -318,15 +335,24 @@ else
 			}
 		
 		if (noise_type == GAUSSIAN_NOISE)
+			{
 			printf("noise type = gaussian\n");
+			sprintf(pnoise_prefix,"g");
+			}
 		else
 			{
 			if (noise_type == UNIFORM_NOISE)
+				{
 				printf("noise type = uniform\n");
+				sprintf(pnoise_prefix,"u");
+				}
 			else
 				{
 				if (noise_type == SINUSOIDAL_NOISE)
+					{
 					printf("noise type = sinusoidal\n");
+					sprintf(pnoise_prefix,"s");
+					}
 				else
 					printf("noise type = unknown\n");
 				}
@@ -338,11 +364,18 @@ else
 			printf("Sinusoidal modulation frequency = %s\n",add_units(noise_bandwidth_Hz,2,"Hz",value_string[0]));
 			
 		if (modulation_type == AM_MODULATION)
+			{
 			printf("modulation type = AM\n");
+			sprintf(pmodulation_string,"Amplitude");
+			}
 		else
 			{
 			if (modulation_type == PM_MODULATION)
+				{
 				printf("modulation type = PM\n");
+				sprintf(pmodulation_string,"Phase");
+			}
+			
 			else
 				printf("modulation type = unknown\n");
 			}
@@ -350,7 +383,7 @@ else
 		/* Find timestamp to append to filenames */
 	
 		find_timestamp(ptimestamp,LINELENGTH);
-		
+
 	/* Create strings for noise_bandwidth and freq_Hz for filenames */
 	
 	sprintf(pfreq_value,"%s",add_units_underscore(freq_Hz,0,"Hz",value_string[0]));
@@ -358,15 +391,27 @@ else
 	
 	if (noise_amp != 0.0)
 		{
-		sprintf(pfnameout,"square_wave_%s_ttran_rise_%.0f_fall_%.0f_percent_du_%.0f_noise_amp_%.0fm_noise_bw_%s_%s.csv",
-		pfreq_value,ttran_rise_percent,ttran_fall_percent,duty_cycle_percent,noise_amp/1e-03,pnoise_bandwidth_value,ptimestamp);
+		
+		switch (modulation_type)
+			{
+			case AM_MODULATION:
+				sprintf(pbase_filename,"square_wave_%s_ttran_rise_%.0f_fall_%.0f_percent_du_%.0f_am_%snoise_amp_%.0fm_noise_bw_%s_%s",
+				pfreq_value,ttran_rise_percent,ttran_fall_percent,duty_cycle_percent,pnoise_prefix,noise_amp/1e-03,pnoise_bandwidth_value,ptimestamp);
+      		break;
+      	case PM_MODULATION:
+				sprintf(pbase_filename,"square_wave_%s_ttran_rise_%.0f_fall_%.0f_percent_du_%.0f_pm_%snoise_amp_%.0fm_noise_bw_%s_%s",
+				pfreq_value,ttran_rise_percent,ttran_fall_percent,duty_cycle_percent,pnoise_prefix,noise_amp/1e-03,pnoise_bandwidth_value,ptimestamp);
+      		break;
+      	default:
+      		printf("In main.c, did NOT recognize modulation type! Exiting...\n");
+            exit(0);
+         }
 		}
 	else
-		{
-		sprintf(pfnameout,"square_wave_%s_ttran_rise_%.0f_fall_%.0f_percent_du_%.0f_noise_amp_%.0fm_%s.csv",
-		pfreq_value,ttran_rise_percent,ttran_fall_percent,duty_cycle_percent,noise_amp/1e-03,ptimestamp);
-		}
-	
+		sprintf(pbase_filename,"square_wave_%s_ttran_rise_%.0f_fall_%.0f_percent_du_%.0f_%s",
+		pfreq_value,ttran_rise_percent,ttran_fall_percent,duty_cycle_percent,ptimestamp);
+
+		sprintf(pfnameout,"%s.csv",pbase_filename);
 		printf("Output filename is \"%s\".\n",pfnameout);
 	            
 	   /*Start loop*/
@@ -770,11 +815,11 @@ else
 	#else
 		if (tau_vout_sec != 0.0)
 			{
-			fprintf(fpw1,"Time (s),vout (V),vout filtered (V) tau = %s (%s)\n",add_units(tau_vout_sec,3,"s",value_string[0]),add_units(1.0/(2.0*pi*tau_vout_sec),3,"Hz",value_string[1]));
+			fprintf(fpw1,"Time (s),vout filtered (V) tau = %s (%s)\n",add_units(tau_vout_sec,3,"s",value_string[0]),add_units(1.0/(2.0*pi*tau_vout_sec),3,"Hz",value_string[1]));
 	   	}
 	   else
 			{
-			fprintf(fpw1,"Time (s),vout (V),vout filtered (V) tau = infinite (no bandlimiting)\n");
+			fprintf(fpw1,"Time (s),vout (no bandlimiting)\n");
 			}	   
 	#endif
 	
@@ -793,7 +838,7 @@ else
 	      #ifdef DEBUG_SQUARE_WAVE
 	   		sprintf(pline1,"%1.12e,%1.12e,%1.12e,%1.12e,%1.12e,%1.12e\n",time_sec[i],vsin[i],vsin_pm[i],vsq[i],vout[i],vout_filtered[i]);
 	      #else
-	      	sprintf(pline1,"%1.12e,%1.12e,%1.12e\n",time_sec[i],vout[i],vout_filtered[i]);
+	      	sprintf(pline1,"%1.12e,%1.12e\n",time_sec[i],vout_filtered[i]);
 	      #endif
 			fprintf(fpw1,"%s",pline1);
 	      ++time_point_counter;
@@ -827,54 +872,60 @@ else
 				{
 				if ( noise_type == GAUSSIAN_NOISE)
 					{
-					sprintf(ptitle_string,"{/:Bold %s Square Wave (Du = %.1f%%, tr = %.1f%%, tf = %.1f%%) Amplitude Modulated by Gaussian Random Noise}\n{/:Bold modulation index (3 sigma) = %s, noise bandwidth = %s, sampling frequency = %s}",add_units(freq_Hz,2,"Hz",value_string[0]),duty_cycle_percent,ttran_rise_percent,ttran_fall_percent,add_units(noise_amp,1,"",value_string[1]),add_units(noise_bandwidth_Hz,2,"Hz",value_string[2]),add_units(1.0/delta_time,2,"Hz",value_string[3]));
+					sprintf(ptitle_string,"{/:Bold %s Square Wave (Du = %.1f%%, tr = %.1f%%, tf = %.1f%%) %s Modulated by Gaussian Random Noise}\n{/:Bold modulation index (3 sigma) = %s, noise bandwidth = %s, sampling frequency = %s}",add_units(freq_Hz,2,"Hz",value_string[0]),duty_cycle_percent,ttran_rise_percent,ttran_fall_percent,pmodulation_string,add_units(noise_amp,1,"",value_string[1]),add_units(noise_bandwidth_Hz,2,"Hz",value_string[2]),add_units(1.0/delta_time,2,"Hz",value_string[3]));
 					}
 				else
 					{
-					sprintf(ptitle_string,"{/:Bold %s Square Wave (Du = %.1f%%, tr = %.1f%%, tf = %.1f%%) Amplitude Modulated by Uniform Random Noise}\n{/:Bold modulation index (range/2) = %s, noise bandwidth = %s, sampling frequency = %s}",add_units(freq_Hz,2,"Hz",value_string[0]),duty_cycle_percent,ttran_rise_percent,ttran_fall_percent,add_units(noise_amp,1,"",value_string[1]),add_units(noise_bandwidth_Hz,2,"Hz",value_string[2]),add_units(1.0/delta_time,2,"Hz",value_string[3]));
+					sprintf(ptitle_string,"{/:Bold %s Square Wave (Du = %.1f%%, tr = %.1f%%, tf = %.1f%%) %s Modulated by Uniform Random Noise}\n{/:Bold modulation index (range/2) = %s, noise bandwidth = %s, sampling frequency = %s}",add_units(freq_Hz,2,"Hz",value_string[0]),duty_cycle_percent,ttran_rise_percent,ttran_fall_percent,pmodulation_string,add_units(noise_amp,1,"",value_string[1]),add_units(noise_bandwidth_Hz,2,"Hz",value_string[2]),add_units(1.0/delta_time,2,"Hz",value_string[3]));
 					}
 				}
 			else
-				sprintf(ptitle_string,"{/:Bold %s Square Wave (Du = %.1f%%, tr = %.1f%%, tf = %.1f%%) Amplitude Modulated by Sinusoidal Signal}\n{/:Bold modulation index = %s, modulation frequency = %s, sampling frequency = %s}",add_units(freq_Hz,2,"Hz",value_string[0]),duty_cycle_percent,ttran_rise_percent,ttran_fall_percent,add_units(noise_amp,1,"",value_string[1]),add_units(noise_bandwidth_Hz,2,"Hz",value_string[2]),add_units(1.0/delta_time,2,"Hz",value_string[3]));
+				sprintf(ptitle_string,"{/:Bold %s Square Wave (Du = %.1f%%, tr = %.1f%%, tf = %.1f%%) %s Modulated by Sinusoidal Signal}\n{/:Bold modulation index = %s, modulation frequency = %s, sampling frequency = %s}",add_units(freq_Hz,2,"Hz",value_string[0]),duty_cycle_percent,ttran_rise_percent,ttran_fall_percent,pmodulation_string,add_units(noise_amp,1,"",value_string[1]),add_units(noise_bandwidth_Hz,2,"Hz",value_string[2]),add_units(1.0/delta_time,2,"Hz",value_string[3]));
 			}
 		else
 			sprintf(ptitle_string,"{/:Bold %s Square Wave (Du = %.1f%%, tr = %.1f%%, tf = %.1f%%)}\n{/:Bold sampling frequency = %s}",add_units(freq_Hz,2,"Hz",value_string[0]),duty_cycle_percent,ttran_rise_percent,ttran_fall_percent,add_units(1.0/delta_time,2,"Hz",value_string[3]));
 		
-		sprintf(pinput_string,"head -1 %s > ./.tempfile0\n",pfnameout);
+		sprintf(pinput_string,"head -1 %s > ./.%s\n",pfnameout,pfnameout);
 		system(pinput_string);
-		sprintf(pinput_string,"tail -%ld %s >> ./.tempfile0\n",5*num_points_per_period,pfnameout);
+		sprintf(pinput_string,"tail -%ld %s >> ./.%s\n",5*num_points_per_period,pfnameout,pfnameout);
 		system(pinput_string);
-		strcpy(pinput_string,"./.tempfile0");
+		
 		#ifdef DEBUG_SQUARE_WAVE
-			sprintf(poctave_command_1,"gnuplot -e 'input_filename = \"%s\"; plot_title = \"%s\"; timestamp = \"%s\";' /Users/sml/cproj/vpulse/vpulse_v1p95_101423/plotting_routines/gnuplot/gnu_plot_debug.gnu \n",pinput_string,ptitle_string,ptimestamp);
+			sprintf(poctave_command_1,"gnuplot -e 'base_filename = \"%s\"; plot_title = \"%s\"; timestamp = \"%s\";' %s/plotting_routines/gnuplot/gnu_plot_debug.gnu \n",pbase_filename,ptitle_string,ptimestamp,PLOTTING_ROUTINES_DIR);
 		#else
-			sprintf(poctave_command_1,"gnuplot -e 'input_filename = \"%s\"; plot_title = \"%s\"; timestamp = \"%s\";' /Users/sml/cproj/vpulse/vpulse_v1p95_101423/plotting_routines/gnuplot/gnu_plot.gnu \n",pinput_string,ptitle_string,ptimestamp);
+			sprintf(poctave_command_1,"gnuplot -e 'base_filename = \"%s\"; plot_title = \"%s\"; timestamp = \"%s\";' %s/plotting_routines/gnuplot/gnu_plot.gnu \n",pbase_filename,ptitle_string,ptimestamp,PLOTTING_ROUTINES_DIR);
 		#endif
 
 		system(poctave_command_1);
+		sprintf(ptemp_string,"rm ./.%s\n",pfnameout);
+		system(ptemp_string);
+		
 		if ((check_executable(pgimp,pgimp_path)) != 0)
 			{
-			sprintf(poctave_command_2,"gimp sq_%s.png&\n",ptimestamp);
+			sprintf(poctave_command_2,"gimp %s.png&\n",pbase_filename);
 			system(poctave_command_2);
 			}
-		system("rm ./.tempfile0");
 		
 /*		sprintf(pinput_string,"gnuplot_command_%s.txt",ptimestamp);
 		fpw1 = fopen(pinput_string,"w");
 		fprintf(fpw1,"%s",poctave_command_1);
-		fclose(fpw1);*/
+		fclose(fpw1); */
 		
 		}
 	
-	/* Create temporary file with vout data to take psd */
+	#ifdef DEBUG_SQUARE_WAVE
+		
+		/* Create temporary file with vout data to take psd */
 	
-		if (noise_amp != 0.0)
-			sprintf(pfname_vout,"vout_%s_ttran_rise_%.0f_fall_%.0f_percent_du_%.0f_noise_amp_%.0fm_noise_bw_%s_%s.csv",
-			pfreq_value,ttran_rise_percent,ttran_fall_percent,duty_cycle_percent,noise_amp/1e-03,pnoise_bandwidth_value,ptimestamp);
-		else
-			sprintf(pfname_vout,"vout_%s_ttran_rise_%.0f_fall_%.0f_percent_du_%.0f_noise_amp_%.0fm_%s.csv",
-			pfreq_value,ttran_rise_percent,ttran_fall_percent,duty_cycle_percent,noise_amp/1e-03,ptimestamp);
-	#ifdef DEBUG_SQUARE_WAVE	
+		for(l=0;l<strlen(pbase_filename);l++)
+			{
+			if (l > 11)
+				input_string[l - 12] = base_filename[l];
+			}
+			input_string[l - 12] = '\0';
+			
+			sprintf(pfname_vout,"vout_%s.csv",pinput_string);
+
 		sprintf(pinput_string,"cut -d\",\" -f1,5 %s > %s\n",pfnameout,pfname_vout);
 		system(pinput_string);
 	#else
@@ -894,20 +945,23 @@ else
 	
 	#ifdef COMPUTE_JITTER
 	
-		if ((check_executable(pjitterhistv15_col,pjitterhistv15_col_path)) == 0)
+		if ((check_executable(pjitterhistv16,pjitterhistv16_path)) == 0)
 			{
-			printf("Did not locate executable for jitterhistv15_col.\n");
-			printf("Disabling all jitter computations as was jitterhistv15_col not found in path.\n");
+			printf("Did not locate executable for jitterhistv16.\n");
+			printf("Disabling all jitter computations as was jitterhistv16 not found in path.\n");
 			}
 		else
 			{
-			if (noise_amp != 0.0)
-				sprintf(pfnameout_jitter,"vout_%s_ttran_rise_%.0f_fall_%.0f_percent_du_%.0f_noise_amp_%.0fm_noise_bw_%s_jitter_%s.csv",
-			pfreq_value,ttran_rise_percent,ttran_fall_percent,duty_cycle_percent,noise_amp/1e-03,pnoise_bandwidth_value,ptimestamp);
-			else
-				sprintf(pfnameout_jitter,"vout_%s_ttran_rise_%.0f_fall_%.0f_percent_du_%.0f_noise_amp_%.0fm_jitter_%s.csv",
-			pfreq_value,ttran_rise_percent,ttran_fall_percent,duty_cycle_percent,noise_amp/1e-03,ptimestamp);
-			sprintf(pinput_string,"jitterhistv15_col %s 3 %s %.4e 0.50 %d y n %.4e\n",
+			/* Create jitter file name, remove 3 digit extension and */
+			/* append "_jitter" and replace extension */
+			
+			if (append_filename_keep_N_characters(pfname_vout,pfnameout_jitter,"_jitter",strlen(ptimestamp) + 5,LINELENGTH + 1) != EXIT_SUCCESS)
+				{
+				printf("Error in created corrected filename from function append_filename_keep_extension()\n");
+				exit(0);
+				}
+
+			sprintf(pinput_string,"jitterhistv16 %s 2 %s %.4e 0.50 %d y n %.4e\n",
 			pfname_vout,pfnameout_jitter,1e-09/delta_time,num_samples_moving_average,1e-06*freq_Hz);
 			system(pinput_string);
 			}
@@ -916,8 +970,10 @@ else
 	
 	free(time_sec);
 	free(vsin);
+	free(vsin_pm);
 	free(vsq);
 	free(vout);
+	free(vout_filtered);
 	free(am_noise);
 	free(pm_noise);
 	free(vth_cross_rise);
