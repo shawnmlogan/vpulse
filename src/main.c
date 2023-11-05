@@ -845,6 +845,18 @@ else
 	      }
 	   }
 	fclose(fpw1);
+	
+	free(time_sec);
+	free(vsin);
+	free(vsin_pm);
+	free(vsq);
+	free(vout);
+	free(vout_filtered);
+	free(am_noise);
+	free(pm_noise);
+	free(vth_cross_rise);
+	free(vth_cross_fall);
+	free(duty_cycle);
 	 
 	if (noise_amp != 0.0)
 	   {
@@ -967,19 +979,7 @@ else
 			}
 	
 	#endif
-	
-	free(time_sec);
-	free(vsin);
-	free(vsin_pm);
-	free(vsq);
-	free(vout);
-	free(vout_filtered);
-	free(am_noise);
-	free(pm_noise);
-	free(vth_cross_rise);
-	free(vth_cross_fall);
-	free(duty_cycle);
-	
+		
 	#ifdef DEBUG_SQUARE_WAVE
 		remove(pfname_vout);
 	#endif
