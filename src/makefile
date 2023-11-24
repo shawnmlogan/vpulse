@@ -20,6 +20,8 @@ $(ODIR)/%.o: %.c $(DEPS)
 vpulse: $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
 
+SH_RESULT:=$(shell install_symbolic_link.sh)
+
 .PHONY: clean
 
 clean:
