@@ -972,7 +972,7 @@ else
 				printf("Error in created corrected filename from function append_filename_keep_extension()\n");
 				exit(0);
 				}
-			if ((duty_cycle_percent > 90.0) || (duty_cycle_percent < 10.0))
+			if ((duty_cycle_percent > 89.0) || (duty_cycle_percent < 11.0))
 				num_samples_moving_average = 0;
 			sprintf(pinput_string,"jitterhistv16 %s 2 %s %.4e 0.50 %d y n %.4e\n",
 			pfname_vout,pfnameout_jitter,1e-09/delta_time,num_samples_moving_average,1e-06*freq_Hz);
