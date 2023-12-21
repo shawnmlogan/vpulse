@@ -872,8 +872,8 @@ else
 	
 	if ((check_executable(pgnuplot,pgnuplot_path)) == 0)
 		{
-		printf("Did not locate executable for gnuplot.\n");
-		printf("Disabling all plots as gnuplot was not found in path.\n");
+		printf("Did not locate executable for gnuplot in $PATH.\n");
+		printf("Disabling all plots.\n");
 		}
 	else
 		{
@@ -946,7 +946,7 @@ else
 
 	if ((check_executable(ppsd_sppowr,ppsd_sppowr_path)) == 0)
 		{
-		printf("Did not locate executable for psd_sppowr.\n");
+		printf("Did not locate executable for psd_sppowr in $PATH.\n");
 		printf("Disabling power spectral density analysis and plot.\n");
 		}
 	else
@@ -959,8 +959,8 @@ else
 	
 		if ((check_executable(pjitterhistv16,pjitterhistv16_path)) == 0)
 			{
-			printf("Did not locate executable for jitterhistv16.\n");
-			printf("Disabling all jitter computations as was jitterhistv16 not found in path.\n");
+			printf("Did not locate executable for jitterhistv16 in $PATH.\n");
+			printf("Disabling all jitter computations.\n");
 			}
 		else
 			{
