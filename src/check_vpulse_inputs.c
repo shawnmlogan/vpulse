@@ -1,6 +1,6 @@
 #include "vpulse.h"
 
-int check_inputs(double freq_Hz,double ttran_rise_percent,double ttran_fall_percent,double duty_cycle_percent, double vout_bandwidth_multiplier, double noise_amp, double noise_bandwidth_Hz, long int num_points_per_period, long int num_periods_to_plot, long int num_periods, char * pnoise_type_string, int *noise_type, char *pnoise_location_string, int *noise_location, char * pmodulation_type_string, int *modulation_type, double init_phase_degrees, double *init_phase_rad)
+int check_vpulse_inputs(double freq_Hz,double ttran_rise_percent,double ttran_fall_percent,double duty_cycle_percent, double vout_bandwidth_multiplier, double noise_amp, double noise_bandwidth_Hz, long int num_points_per_period, long int num_periods_to_plot, long int num_periods, char * pnoise_type_string, int *noise_type, char *pnoise_location_string, int *noise_location, char * pmodulation_type_string, int *modulation_type, double init_phase_degrees, double *init_phase_rad)
 {
 int return_status = EXIT_SUCCESS;
 char value_string[NUMBER_OF_VALUE_STRINGS][LINELENGTH_OF_VALUE_STRING + 1];
@@ -60,8 +60,29 @@ if ((duty_cycle_percent * (double) num_points_per_period/100.0) < MIN_NUM_POINTS
 
 if ((duty_cycle_percent + ttran_rise_percent/2.0 + ttran_fall_percent/2.0) > 100.0)
    	{
-   	printf("Sum of rise time (%.2f), fall time (%.2f), and duty cycle (%.2f) exceeds 100%%.\n",
+   	printf("Sum of rise time (%.1f%%), fall time (%.1f%%), and duty cycle (%.1f%%) exceeds 100%%.\n",
    	ttran_rise_percent,ttran_fall_percent,duty_cycle_percent);
+   	return_status = EXIT_FAILURE;
+   	}
+
+if ((duty_cycle_percent - ttran_fall_percent/2.0) < 0.0)
+   	{
+   	printf("To create duty cycle of %.1f%%, fall time must be less than %.1f%%, read fall time of %.1f%%.\n",
+   	duty_cycle_percent,2.0*duty_cycle_percent,ttran_fall_percent);
+   	return_status = EXIT_FAILURE;
+   	}
+
+if ((duty_cycle_percent - ttran_rise_percent/2.0) < 0.0)
+   	{
+   	printf("To create duty cycle of %.1f%%, rise time must be less than %.1f%%, read rise time of %.1f%%.\n",
+   	duty_cycle_percent,2.0*duty_cycle_percent,ttran_rise_percent);
+   	return_status = EXIT_FAILURE;
+   	}
+
+if ((duty_cycle_percent - ttran_rise_percent/2.0 - ttran_fall_percent/2.0 ) < 0.0)
+   	{
+   	printf("To create duty cycle of %.1f%%, sum of rise time and fall time must be less than %.1f%%, read rise time of %.1f%% and fall time of %.1f%%.\n",
+   	duty_cycle_percent,2.0*duty_cycle_percent,ttran_rise_percent,ttran_fall_percent);
    	return_status = EXIT_FAILURE;
    	}
 

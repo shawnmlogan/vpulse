@@ -17,12 +17,12 @@
 #define VOUT_BANDWIDTH_MULTIPLIER 50.0
 #define MAXIMUM_BANDWIDTH_MULTIPLIER 1000.0
 #define COMPUTE_JITTER
-
+#define MINIMUM_NUMBER_THRESHOLD_CROSSINGS 2
 
 /*Add #defines for version number*/
 
-#define VERSION_NUMBER	2.04
-#define VERSION_DATE "12/21/2023"
+#define VERSION_NUMBER	2.05
+#define VERSION_DATE "12/23/2023"
 
 /* Add #defines for minimum number of points per period based on transition */
 /* times and duty cycle */
@@ -104,7 +104,7 @@ int check_executable(char *pprogram_executable,char *preturn_string);
 int double_compare(const void* a, const void* b);
 int parsestring_to_doubles_array(char *pinput_string,double *pdoubles_array,int *parray_size,int max_array_size);
 double mean(double *x, long int N);
-int check_inputs(double freq_Hz,double ttran_rise_percent,double ttran_fall_percent,double duty_cycle_percent, double vout_bandwidth_multiplier, double noise_amp, double noise_bandwidth_Hz, long int num_points_per_period, long int num_periods_to_plot, long int num_periods, char * pnoise_type_string, int *noise_type, char *pnoise_location_string, int *noise_location, char * pmodulation_type_string, int *modulation_type, double init_phase_degrees, double *init_phase_rad);
+int check_vpulse_inputs(double freq_Hz,double ttran_rise_percent,double ttran_fall_percent,double duty_cycle_percent, double vout_bandwidth_multiplier, double noise_amp, double noise_bandwidth_Hz, long int num_points_per_period, long int num_periods_to_plot, long int num_periods, char * pnoise_type_string, int *noise_type, char *pnoise_location_string, int *noise_location, char * pmodulation_type_string, int *modulation_type, double init_phase_degrees, double *init_phase_rad);
 int append_filename_keep_N_characters(char *pfin, char *pfout_appended, char *pappended_string, int N, int max_num_characters);
 
 /*Functions used to compute derivatives of diff equations*/
@@ -173,4 +173,4 @@ double s6 = 1.0/4.0;
 double pi;
 #endif
 
-#define PLOTTING_ROUTINES_DIR "/Users/sml/cproj/vpulse/vpulse_v2p04_122123"
+#define PLOTTING_ROUTINES_DIR "/Users/sml/cproj/vpulse/vpulse_v2p05_122323"
