@@ -29,7 +29,6 @@ double coeffi[] = {9.726743609632e-01,4.212749865460e-03,-7.100201979438e-04,4.7
 double c0 = 2.555552820758e+01, m = 5.757636118011e-01;
 double errmax = 100.0;
 
-int l;
 int noise_type = GAUSSIAN_NOISE;
 int noise_location = ENTERED_NOISE_AMP_IS_FILTERED;
 int modulation_type = AM_MODULATION;
@@ -38,8 +37,8 @@ int num_samples_moving_average = 12;
 
 unsigned int seed;
 
-long int i, j, k;
-long int num_points_per_period, num_periods, num_periods_to_plot, num_crossings;
+long int i, j, k, l;
+long int num_points_per_period, num_periods, settling_periods, num_periods_to_plot, num_crossings;
 long int length_vth_cross_rise = 0, length_vth_cross_fall = 0;
 long int length_vout_vth_cross_rise = 0, length_vout_vth_cross_fall = 0; 
 long int noise_counter = 0, time_point_counter;
@@ -298,7 +297,15 @@ if (vout_bandwidth_multiplier > 0.0)
 	tau_vout_sec = 1.0/(2.0*pi*vout_bandwidth_multiplier*freq_Hz);
 else
 	tau_vout_sec = 0.0;
-	
+
+ /* Extend analysis time to allow for settling time of first-order post filter by settling_periods periods */
+if (tau_vout_sec != 0)
+	{
+	settling_periods = (long int) ceil(5.0/vout_bandwidth_multiplier);
+	}
+else
+	settling_periods = 0;
+
 /* Compute sinusoidal threshold based on 3rd order polynomial */
 	
 	vthreshold = 0.0;
@@ -472,57 +479,57 @@ else
 		#endif
 		}
 	
-	if( (time_sec = (double *) calloc(num_points_per_period*(num_periods + 1) + 1,sizeof(double))) == NULL)
+	if( (time_sec = (double *) calloc(num_points_per_period*(num_periods + 1 + settling_periods) + 1,sizeof(double))) == NULL)
 		{
 		printf("Error allocating memory to time_sec!\n");
 		exit(0);
 		}
-	if( (vsin = (double *) calloc(num_points_per_period*(num_periods + 1) + 1,sizeof(double))) == NULL)
+	if( (vsin = (double *) calloc(num_points_per_period*(num_periods + 1 + settling_periods) + 1,sizeof(double))) == NULL)
 		{
 		printf("Error allocating memory to vsin!\n");
 		exit(0);
 		}
-	if( (vsin_pm = (double *) calloc(num_points_per_period*(num_periods + 1) + 1,sizeof(double))) == NULL)
+	if( (vsin_pm = (double *) calloc(num_points_per_period*(num_periods + 1 + settling_periods) + 1,sizeof(double))) == NULL)
 		{
 		printf("Error allocating memory to vsin_pm!\n");
 		exit(0);
 		}
-	if( (vsq = (double *) calloc(num_points_per_period*(num_periods + 1) + 1,sizeof(double))) == NULL)
+	if( (vsq = (double *) calloc(num_points_per_period*(num_periods + 1 + settling_periods) + 1,sizeof(double))) == NULL)
 		{
 		printf("Error allocating memory to vsq!\n");
 		exit(0);
 		}
-	if( (vout = (double *) calloc(num_points_per_period*(num_periods + 1) + 1,sizeof(double))) == NULL)
+	if( (vout = (double *) calloc(num_points_per_period*(num_periods + 1 + settling_periods) + 1,sizeof(double))) == NULL)
 		{
 		printf("Error allocating memory to vout!\n");
 		exit(0);
 		}
-	if( (vout_filtered = (double *) calloc(num_points_per_period*(num_periods + 1) + 1,sizeof(double))) == NULL)
+	if( (vout_filtered = (double *) calloc(num_points_per_period*(num_periods + 1 + settling_periods) + 1,sizeof(double))) == NULL)
 		{
 		printf("Error allocating memory to vout_filtered!\n");
 		exit(0);
 		}
-	if( (am_noise = (double *) calloc(num_points_per_period*(num_periods + 1) + 1,sizeof(double))) == NULL)
+	if( (am_noise = (double *) calloc(num_points_per_period*(num_periods + 1 + settling_periods) + 1,sizeof(double))) == NULL)
 		{
 		printf("Error allocating memory to am_noise!\n");
 		exit(0);
 		}
-	if( (pm_noise = (double *) calloc(num_points_per_period*(num_periods + 1) + 1,sizeof(double))) == NULL)
+	if( (pm_noise = (double *) calloc(num_points_per_period*(num_periods + 1 + settling_periods) + 1,sizeof(double))) == NULL)
 		{
 		printf("Error allocating memory to pm_noise!\n");
 		exit(0);
 		}
-	if( (vth_cross_rise = (double *) calloc(2*num_periods,sizeof(double))) == NULL)
+	if( (vth_cross_rise = (double *) calloc(2*(num_periods + settling_periods),sizeof(double))) == NULL)
 		{
 		printf("Error allocating memory to vth_cross_rise!\n");
 		exit(0);
 		}
-	if( (vth_cross_fall = (double *) calloc(2*num_periods,sizeof(double))) == NULL)
+	if( (vth_cross_fall = (double *) calloc(2*(num_periods + settling_periods),sizeof(double))) == NULL)
 		{
 		printf("Error allocating memory to vth_cross_fall!\n");
 		exit(0);
 		}
-	if( (duty_cycle = (double *) calloc(2*num_periods,sizeof(double))) == NULL)
+	if( (duty_cycle = (double *) calloc(2*(num_periods + settling_periods),sizeof(double))) == NULL)
 		{
 		printf("Error allocating memory to duty_cycle!\n");
 		exit(0);
@@ -540,7 +547,7 @@ else
 		#endif
 		}
 		
-   for (i = 0; i < num_points_per_period*(num_periods + 1) + 1; i++)
+   for (i = 0; i < num_points_per_period*(num_periods + 1 + settling_periods) + 1; i++)
       {
 		time_sec[i] = delta_time *((double) i);
 	   /*Add random phase noise of maximum magnitude "noise_amp_pp" UIpp to fin*/
@@ -624,7 +631,7 @@ else
 length_vth_cross_rise = 0;
 length_vth_cross_fall = 0;
 
-for (i = 0;i < num_points_per_period*(num_periods + 1) + 1;i++)
+for (i = 0;i < num_points_per_period*(num_periods + 1 + settling_periods) + 1;i++)
 	{
 	time_sec[i] = delta_time *((double) i);
 	vsin[i] = sin(2.0*pi*time_sec[i]*freq_Hz + init_phase_rad);
@@ -636,19 +643,8 @@ for (i = 0;i < num_points_per_period*(num_periods + 1) + 1;i++)
 			{
 			if ((vsin[i] >= vthreshold) && (vsin[i - 1] < vthreshold))
 				{
-				if (length_vth_cross_rise > 0)
-					{
-					if ((vsin[i] >= vthreshold) && (vsin[i - 1] < vthreshold))
-						{
-						vth_cross_rise[length_vth_cross_rise] = time_sec[i] + pm_noise[i]*per_sec;
-						length_vth_cross_rise++;
-						}
-					}
-				else
-					{
-					vth_cross_rise[length_vth_cross_rise] = time_sec[i] + pm_noise[i]*per_sec;
-					length_vth_cross_rise++;
-					}	
+				vth_cross_rise[length_vth_cross_rise] = time_sec[i] + pm_noise[i]*per_sec;
+				length_vth_cross_rise++;
 				}
 			}
 		else
@@ -663,19 +659,8 @@ for (i = 0;i < num_points_per_period*(num_periods + 1) + 1;i++)
 			{
 			if ((vsin[i] <= vthreshold) && (vsin[i - 1] > vthreshold))
 				{
-				if (length_vth_cross_fall > 0)
-					{
-					if ((vsin[i] <= vthreshold) && (vsin[i - 1] > vthreshold))
-						{
-						vth_cross_fall[length_vth_cross_fall] = time_sec[i] + pm_noise[i]*per_sec;
-						length_vth_cross_fall++;
-						}
-					}
-				else
-					{
-					vth_cross_fall[length_vth_cross_fall] = time_sec[i] + pm_noise[i]*per_sec;
-					length_vth_cross_fall++;
-					}
+				vth_cross_fall[length_vth_cross_fall] = time_sec[i] + pm_noise[i]*per_sec;
+				length_vth_cross_fall++;
 				}
 			}
 			else
@@ -713,12 +698,11 @@ else
 #endif
 
 mean_du = mean(duty_cycle,num_crossings - 1);
-/* printf("Computed mean duty cycle of %.2f%% from %ld threshold crossings.\n",mean_du,num_crossings); */
 
 j = 0;
 k = 0;
 
-for (i = 0; i < num_points_per_period*(num_periods + 1) + 1; i++)
+for (i = 0; i < num_points_per_period*(num_periods + 1 + settling_periods) + 1; i++)
 	{
 	if((time_sec[i] >= (vth_cross_rise[j] - ttran_rise/2.0)) && (time_sec[i] < (vth_cross_rise[j] + ttran_rise/2.0)))
 		vout[i] = 0.50 + (time_sec[i] - vth_cross_rise[j])/ttran_rise;
@@ -754,7 +738,7 @@ for (i = 0; i < num_points_per_period*(num_periods + 1) + 1; i++)
 /* Remove first period since its initial transition time was not set to ttran_rise nor ttran_fall */
 /* Apply AM modulation to signals */
 j = 0;
-for (i = 0; i < num_points_per_period*(num_periods + 1); i++)
+for (i = 0; i < num_points_per_period*(num_periods + 1 + settling_periods); i++)
 	{
 	if (i >= num_points_per_period)
 		{
@@ -784,6 +768,7 @@ for (i = 0; i < num_points_per_period*(num_periods + 1); i++)
 		j++;
 		}
 	}
+
 for (i = j; i < j + num_points_per_period;i++)
 	{
 	time_sec[i] = time_sec[j - 1];
@@ -792,6 +777,29 @@ for (i = j; i < j + num_points_per_period;i++)
 	vout[i] = vout[j - 1]*(1.0 + am_noise[j - 1]);
 	vout_filtered[i] = vout_filtered[j - 1];
 	}
+
+/* Remove settling periods */
+
+j = num_points_per_period*settling_periods + 1;
+
+for (i = j; i < j + num_points_per_period*num_periods;i++)
+	{
+	time_sec[i - j] = time_sec[i] - time_sec[j];
+	vsin_pm[i - j] = vsin_pm[i];
+	vsq[i - j] = vsq[i];
+	vout[i - j] = vout[i];
+	vout_filtered[i - j] = vout_filtered[i];
+	}
+	
+for (l = i; i < num_points_per_period*(num_periods + 1 + settling_periods); i++)
+	{
+	time_sec[l] = time_sec[i];
+	vsin_pm[l] = vsin_pm[i];
+	vsq[l] = vsq[i];
+	vout[l] = vout[i];
+	vout_filtered[l] = vout_filtered[i];
+	}
+
 #ifdef FILTER_VOUT	
 for (i = 0; i < j + num_points_per_period;i++)
 	{
@@ -800,6 +808,7 @@ for (i = 0; i < j + num_points_per_period;i++)
 #endif
 
 /* Compute duty cycle of filtered waveform */
+
 for (i = 0; i< length_vth_cross_rise; i++)
 	vth_cross_rise[i] = 0.0;
 for (i = 0; i< length_vth_cross_fall; i++)
@@ -810,50 +819,22 @@ for (i = 0; i< num_crossings; i++)
 length_vth_cross_rise = 0;
 length_vth_cross_fall = 0;
 
-for (i = 0; i< length_vth_cross_rise; i++)
-	vth_cross_rise[i] = 0.0;
-for (i = 0; i< length_vth_cross_fall; i++)
-	vth_cross_fall[i] = 0.0;
-
-
 for (i = 1;i < num_points_per_period*num_periods + 1;i++)
 	{
 	if (vout_filtered[i] >= vout_threshold)
 		{
 		if ((vout_filtered[i] >= vout_threshold) && (vout_filtered[i - 1] < vout_threshold))
 			{
-			if (length_vth_cross_rise > 0)
-				{
-				if ((vout_filtered[i] >= vout_threshold) && (vout_filtered[i - 1] < vout_threshold))
-					{
-					vth_cross_rise[length_vth_cross_rise] = time_sec[i];
-					length_vth_cross_rise++;
-					}
-				}
-			else
-				{
-				vth_cross_rise[length_vth_cross_rise] = time_sec[i];
-				length_vth_cross_rise++;
-				}	
+			vth_cross_rise[length_vth_cross_rise] = time_sec[i];
+			length_vth_cross_rise++;
 			}
 		}
 	else
 		{
-		if ((vout_filtered[i] <= vout_threshold) && (vout_filtered[i - 1] > vout_threshold))
+		if ((vout_filtered[i] < vout_threshold) && (vout_filtered[i - 1] >= vout_threshold))
 			{
-			if (length_vth_cross_fall > 0)
-				{
-				if ((vout_filtered[i] <= vout_threshold) && (vout_filtered[i - 1] > vout_threshold))
-					{
-					vth_cross_fall[length_vth_cross_fall] = time_sec[i] + pm_noise[i]*per_sec;
-					length_vth_cross_fall++;
-					}
-				}
-			else
-				{
-				vth_cross_fall[length_vth_cross_fall] = time_sec[i] + pm_noise[i]*per_sec;
-				length_vth_cross_fall++;
-				}
+			vth_cross_fall[length_vth_cross_fall] = time_sec[i];
+			length_vth_cross_fall++;
 			}
 		}
 		if (vout_filtered[i] > vout_filtered_max)
@@ -864,7 +845,7 @@ for (i = 1;i < num_points_per_period*num_periods + 1;i++)
 
 /* -------------------------------------------- */
 
-if ((length_vth_cross_fall != 0) || (length_vth_cross_fall != 0))
+if ((length_vth_cross_fall != 0) && (length_vth_cross_rise != 0))
 	{
 	if (length_vth_cross_fall >= length_vth_cross_rise)
 		num_crossings = length_vth_cross_rise;
@@ -882,16 +863,19 @@ if ((length_vth_cross_fall != 0) || (length_vth_cross_fall != 0))
 			duty_cycle[i - 1] = 100.0*(1.0 - (vth_cross_rise[i] - vth_cross_fall[i])/(vth_cross_rise[i] - vth_cross_rise[i - 1]));
 		}
 	mean_vout_filtered_du = mean(duty_cycle,num_crossings - 1);
-	printf("Computed mean duty cycle of filtered output of %.2f%% from %ld threshold crossings.\n",mean_vout_filtered_du,num_crossings);
+	printf("Computed mean duty cycle of filtered output of %.2f%% (+/- %.2f%%) from %ld threshold crossings.\n",mean_vout_filtered_du,100.0*delta_time*freq_Hz,num_crossings);
 	}
 else
 	{
 	num_crossings = 0;
 	mean_vout_filtered_du = 0.0;
-	printf("Filtered output waveform has a maximum of %s and does not cross threshold of %s.\n",
-	add_units(vout_filtered_max,1,"V",value_string[1]),add_units(vout_threshold,1,"V",value_string[0]));
+	if (vout_filtered_max < vout_threshold)
+		printf("Filtered output waveform has a maximum of %s and does not cross threshold of %s.\n",
+		add_units(vout_filtered_max,1,"V",value_string[1]),add_units(vout_threshold,1,"V",value_string[0]));
+	else
+		printf("Filtered output waveform has a minimum of %s and does not cross threshold of %s.\n",
+		add_units(vout_filtered_min,1,"V",value_string[1]),add_units(vout_threshold,1,"V",value_string[0]));
 	}
-
 
 /* End of compute duty cycle of filtered waveform */
 
