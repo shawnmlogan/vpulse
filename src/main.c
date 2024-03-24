@@ -547,7 +547,7 @@ else
 		#endif
 		}
 		
-   for (i = 0; i < num_points_per_period*(num_periods + 1 + settling_periods) + 1; i++)
+   for (i = 0; i < num_points_per_period*(num_periods + 1 + settling_periods) + 2; i++)
       {
 		time_sec[i] = delta_time *((double) i);
 	   /*Add random phase noise of maximum magnitude "noise_amp_pp" UIpp to fin*/
@@ -631,7 +631,7 @@ else
 length_vth_cross_rise = 0;
 length_vth_cross_fall = 0;
 
-for (i = 0;i < num_points_per_period*(num_periods + 1 + settling_periods) + 1;i++)
+for (i = 0;i < num_points_per_period*(num_periods + 1 + settling_periods) + 2;i++)
 	{
 	time_sec[i] = delta_time *((double) i);
 	vsin[i] = sin(2.0*pi*time_sec[i]*freq_Hz + init_phase_rad);
@@ -702,7 +702,7 @@ mean_du = mean(duty_cycle,num_crossings - 1);
 j = 0;
 k = 0;
 
-for (i = 0; i < num_points_per_period*(num_periods + 1 + settling_periods) + 1; i++)
+for (i = 0; i < num_points_per_period*(num_periods + 1 + settling_periods) + 2; i++)
 	{
 	if((time_sec[i] >= (vth_cross_rise[j] - ttran_rise/2.0)) && (time_sec[i] < (vth_cross_rise[j] + ttran_rise/2.0)))
 		vout[i] = 0.50 + (time_sec[i] - vth_cross_rise[j])/ttran_rise;
@@ -738,11 +738,11 @@ for (i = 0; i < num_points_per_period*(num_periods + 1 + settling_periods) + 1; 
 /* Remove first period since its initial transition time was not set to ttran_rise nor ttran_fall */
 /* Apply AM modulation to signals */
 j = 0;
-for (i = 0; i < num_points_per_period*(num_periods + 1 + settling_periods); i++)
+for (i = 0; i < num_points_per_period*(num_periods + 1 + settling_periods) + 2; i++)
 	{
 	if (i >= num_points_per_period)
 		{
-		time_sec[j] = time_sec[i] - time_sec[num_points_per_period];
+		time_sec[j] = time_sec[i] = delta_time *((double) j);
 		vsin_pm[j] = vsin_pm[i]*(1.0 + am_noise[i]);
 		vsq[j] = vsq[i]*(1.0 + am_noise[i]);
 		vout[j] = vout[i]*(1.0 + am_noise[i]);
@@ -769,35 +769,35 @@ for (i = 0; i < num_points_per_period*(num_periods + 1 + settling_periods); i++)
 		}
 	}
 
-for (i = j; i < j + num_points_per_period;i++)
+for (i = j; i < num_points_per_period*(num_periods + 1 + settling_periods + 2);i++)
 	{
-	time_sec[i] = time_sec[j - 1];
-	vsin_pm[i] = vsin_pm[j - 1]*(1.0 + am_noise[j - 1]);
-	vsq[i] = vsq[j - 1]*(1.0 + am_noise[j - 1]);
-	vout[i] = vout[j - 1]*(1.0 + am_noise[j - 1]);
-	vout_filtered[i] = vout_filtered[j - 1];
+	time_sec[i] = 0.0;
+	vsin_pm[i] = 0.0;
+	vsq[i] = 0.0;
+	vout[i] = 0.0;
+	vout_filtered[i] = 0.0;
 	}
 
 /* Remove settling periods */
 
 j = num_points_per_period*settling_periods + 1;
 
-for (i = j; i < j + num_points_per_period*num_periods;i++)
+for (i = j; i < num_points_per_period*(num_periods + settling_periods) + 2;i++)
 	{
-	time_sec[i - j] = time_sec[i] - time_sec[j];
+	time_sec[i - j] = delta_time * ((double) (i - j));
 	vsin_pm[i - j] = vsin_pm[i];
 	vsq[i - j] = vsq[i];
 	vout[i - j] = vout[i];
 	vout_filtered[i - j] = vout_filtered[i];
 	}
-	
-for (l = i; i < num_points_per_period*(num_periods + 1 + settling_periods); i++)
+
+for (l = i - j; l < num_points_per_period*(num_periods + 1 + settling_periods) + 2; l++)
 	{
-	time_sec[l] = time_sec[i];
-	vsin_pm[l] = vsin_pm[i];
-	vsq[l] = vsq[i];
-	vout[l] = vout[i];
-	vout_filtered[l] = vout_filtered[i];
+	time_sec[l] = 0.0;
+	vsin_pm[l] = 0.0;
+	vsq[l] = 0.0;
+	vout[l] = 0.0;
+	vout_filtered[l] = 0.0;
 	}
 
 #ifdef FILTER_VOUT	
@@ -909,7 +909,7 @@ fpw1 = fopen(pfnameout,"w");
 
 time_point_counter = 0;
 
-for (i = 0; i < num_points_per_period*num_periods - 1; i++)
+for (i = 0; i < num_points_per_period*num_periods; i++)
 	{
 
    /*Print data to file if time > TSTART and time is close to printstep*/
