@@ -909,7 +909,7 @@ fpw1 = fopen(pfnameout,"w");
 
 time_point_counter = 0;
 
-for (i = 0; i < num_points_per_period*num_periods; i++)
+for (i = 0; i < num_points_per_period*num_periods - 1; i++)
 	{
 
    /*Print data to file if time > TSTART and time is close to printstep*/

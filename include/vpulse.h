@@ -21,8 +21,8 @@
 
 /*Add #defines for version number*/
 
-#define VERSION_NUMBER	2.07
-#define VERSION_DATE "1/2/2024"
+#define VERSION_NUMBER	2.08
+#define VERSION_DATE "3/23/2024"
 
 /* Add #defines for minimum number of points per period based on transition */
 /* times and duty cycle */
@@ -173,4 +173,4 @@ double s6 = 1.0/4.0;
 double pi;
 #endif
 
-#define PLOTTING_ROUTINES_DIR "/Users/sml/cproj/vpulse/vpulse_v2p07_010224"
+#define PLOTTING_ROUTINES_DIR "/Users/sml/cproj/vpulse/vpulse_v2p08_032324"
