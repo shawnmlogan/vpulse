@@ -8,7 +8,7 @@ ODIR=obj
 _DEPS = vpulse.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
-_OBJ = add_units.o add_units_underscore.o append_filename_keep_N_characters.o check_executable.o check_vpulse_inputs.o f3.o find_date.o find_modulation_type.o find_noise_location.o find_noise_type.o find_timestamp.o main.o mean.o pnoise_type.o random_gaussian_clocknoise.o random_uniform_clocknoise.o remove_carriage_return.o rkstep1.o sort_array_by_column_number.o
+_OBJ = add_units_2.o add_units_underscore.o append_filename_keep_N_characters.o check_executable.o check_vpulse_inputs.o f3.o find_date.o find_modulation_type.o find_noise_location.o find_noise_type.o find_timestamp.o main.o mean.o pnoise_type.o random_gaussian_clocknoise.o random_uniform_clocknoise.o remove_carriage_return.o rkstep1.o
 
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 

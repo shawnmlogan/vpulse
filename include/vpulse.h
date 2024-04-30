@@ -21,8 +21,8 @@
 
 /*Add #defines for version number*/
 
-#define VERSION_NUMBER	2.09
-#define VERSION_DATE "3/24/2024"
+#define VERSION_NUMBER	2.10
+#define VERSION_DATE "4/30/2024"
 
 /* Add #defines for minimum number of points per period based on transition */
 /* times and duty cycle */
@@ -94,7 +94,7 @@ typedef struct {
 
 /*Function prototypes*/
 
-char * add_units(double value,int num_digits,char *suffix,char *pvalue_string);
+char * add_units_2(double value,int num_digits,int width,int min_string_length,char *suffix,char *pvalue_string);
 char * add_units_underscore(double value,int num_digits,char *suffix,char *pvalue_string);
 void find_date(char *pdate_string,int max_characters);
 int find_timestamp(char *pdate_string,int max_characters);
@@ -118,7 +118,6 @@ double vmax, double vmin,double errmax,int iter);
 void compute(struct coeff *pw,double R1,double R2,double R3,double C1,double C2, 
 double RS1, double RS2,int ph);
 
-
 /*Noise related functions*/
 
 double random_gaussian_clocknoise(double sigma, double average_value, unsigned int seed);
@@ -127,10 +126,6 @@ char *pnoise_type(int noise_type);
 int find_modulation_type(char * pmodulation_type_string, int *modulation_type);
 int find_noise_type(char * pnoise_type_string, int *noise_type);
 int find_noise_location(char * ppnoise_location_string, int *noise_location);
-
-/*Analysis data related functions*/
-
-void sort_array_by_column_number(double *parray,int rows,int cols, int sort_column_number);
 
 /*Define Cash-Karp parameters for embedded Runge-Kutta method - only for rkstep1()*/
 
@@ -173,4 +168,4 @@ double s6 = 1.0/4.0;
 double pi;
 #endif
 
-#define PLOTTING_ROUTINES_DIR "/Users/sml/cproj/vpulse/vpulse_v2p09"
+#define PLOTTING_ROUTINES_DIR "/Users/sml/cproj/vpulse/vpulse_v2p10"

@@ -30,14 +30,14 @@ if (((ttran_rise_percent * (double) num_points_per_period/100.0) < MIN_NUM_POINT
    	if (ttran_rise_percent <= ttran_fall_percent)
    		{
    		printf("Insufficient number of points per waveforms specified for rise transition time of %s.\n",
-   		add_units(ttran_rise_percent,1,"%",value_string[0]));
+   		add_units_2(ttran_rise_percent,1,0,0,"%",value_string[0]));
    		printf("Enter at least %.0f number of points per period.\n",
    		ceil(100.0* (double) MIN_NUM_POINTS_PER_TRANSIIION/ttran_rise_percent));
    		}
    	else
    		{
    		printf("Insufficient number of points per waveforms specified for fall transition time of %s .\n",
-   		add_units(ttran_fall_percent,1,"%",value_string[0]));
+   		add_units_2(ttran_fall_percent,1,0,0,"%",value_string[0]));
    		printf("Enter at least %.0f number of points per period.\n",
    		ceil(100.0* (double) MIN_NUM_POINTS_PER_TRANSIIION/ttran_fall_percent));
    		}
@@ -53,7 +53,7 @@ if (duty_cycle_percent < 0.0)
 if ((duty_cycle_percent * (double) num_points_per_period/100.0) < MIN_NUM_POINTS_PER_ONTIME)
    	{
    	printf("Insufficient number of points per waveforms specified for duty cycle of %s.\n",
-   	add_units(duty_cycle_percent,1,"%",value_string[0]));
+   	add_units_2(duty_cycle_percent,1,0,0,"%",value_string[0]));
    	printf("Enter at least %.0f number of points per period.\n",
    	ceil(100.0* (double) MIN_NUM_POINTS_PER_ONTIME/duty_cycle_percent));
    	}
@@ -100,7 +100,7 @@ if (vout_bandwidth_multiplier != 0.0)
 		printf("Enter at least %.0f number of points per period to allow for\n",
 		10.0*vout_bandwidth_multiplier);
 		printf("output square wave RC filter bandwidth of %s, read value of %ld.\n",
-		add_units(vout_bandwidth_multiplier*freq_Hz,2,"Hz",value_string[0]),num_points_per_period);
+		add_units_2(vout_bandwidth_multiplier*freq_Hz,2,0,0,"Hz",value_string[0]),num_points_per_period);
 		return_status = EXIT_FAILURE;
 		}
 	}

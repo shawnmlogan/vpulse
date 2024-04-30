@@ -316,7 +316,7 @@ else
 #endif
 
 printf("Analysis parameters:\n");
-printf("Square wave input frequency = %s\n",add_units(freq_Hz,3,"Hz",value_string[0]));
+printf("Square wave input frequency = %s\n",add_units_2(freq_Hz,3,0,0,"Hz",value_string[0]));
 printf("Initial phase = %.1f degrees\n",init_phase_degrees );
 printf("Rise time = %.1f%% of period\n",ttran_rise_percent);
 printf("Fall time = %.1f%% of period\n",ttran_fall_percent);
@@ -325,7 +325,7 @@ printf("Square wave RC filter bandwidth multiplier = %.2f\n",vout_bandwidth_mult
 printf("num_points_per_period = %ld\n",num_points_per_period);
 printf("num_periods = %ld\n",num_periods);
 printf("num_periods_to_plot = %ld\n",num_periods_to_plot);
-printf("modulation_index (noise_amp) = %s\n",add_units(noise_amp,1,"",value_string[0]));
+printf("modulation_index (noise_amp) = %s\n",add_units_2(noise_amp,1,0,0,"",value_string[0]));
 
 if (noise_amp != 0.0)
 	{
@@ -367,9 +367,9 @@ if (noise_amp != 0.0)
 		}
 	
 	if (noise_type != SINUSOIDAL_NOISE)
-		printf("noise_bandwidth = %s\n",add_units(noise_bandwidth_Hz,2,"Hz",value_string[0]));
+		printf("noise_bandwidth = %s\n",add_units_2(noise_bandwidth_Hz,2,0,0,"Hz",value_string[0]));
 	else
-		printf("Sinusoidal modulation frequency = %s\n",add_units(noise_bandwidth_Hz,2,"Hz",value_string[0]));
+		printf("Sinusoidal modulation frequency = %s\n",add_units_2(noise_bandwidth_Hz,2,0,0,"Hz",value_string[0]));
 		
 	if (modulation_type == AM_MODULATION)
 		{
@@ -435,7 +435,7 @@ else
 	prpoint = delta_time;
 	
 	TSTART = delta_time*( (double) (num_points_per_period*(num_periods - num_periods_to_plot)));
-	printf("Analysis is for %s, data printed starting at %s.\n",add_units(delta_time*( (double) num_points_per_period*num_periods),3,"s",value_string[0]),add_units(TSTART,3,"s",value_string[1]));
+	printf("Analysis is for %s, data printed starting at %s.\n",add_units_2(delta_time*( (double) num_points_per_period*num_periods),3,0,0,"s",value_string[0]),add_units_2(TSTART,3,0,0,"s",value_string[1]));
 
 	if (noise_amp != 0.0)
 		{
@@ -460,20 +460,20 @@ else
 			if (noise_location == ENTERED_NOISE_AMP_IS_FILTERED)
 				{
 				printf("Setting unfiltered_noise_amp to %.4f from noise_amp of %.4f\nfor noise bandwidth of %s and sampling frequency of %s.\n",
-				unfiltered_noise_amp,noise_amp, add_units(noise_bandwidth_Hz,2,"Hz",value_string[0]),add_units(1.0/delta_time,2,"Hz",value_string[1]));
+				unfiltered_noise_amp,noise_amp, add_units_2(noise_bandwidth_Hz,2,0,0,"Hz",value_string[0]),add_units_2(1.0/delta_time,2,0,0,"Hz",value_string[1]));
 				}
 			else
 				{
 				if (noise_location == ENTERED_NOISE_AMP_IS_UNFILTERED)
 					{
 					printf("Setting unfiltered noise_amp to %.4f\nfor noise bandwidth of %s and sampling frequency of %s.\n",
-					unfiltered_noise_amp,add_units(noise_bandwidth_Hz,2,"Hz",value_string[0]),add_units(1.0/delta_time,2,"Hz",value_string[1]));
+					unfiltered_noise_amp,add_units_2(noise_bandwidth_Hz,2,0,0,"Hz",value_string[0]),add_units_2(1.0/delta_time,2,0,0,"Hz",value_string[1]));
 					}
 				else
 					{
 					printf("Unknown noise injection location type, setting to after filter.\n");
 					printf("Setting unfiltered_noise_amp to %.4f from noise_amp of %.4f\nfor noise bandwidth of %s and sampling frequency of %s.\n",
-					unfiltered_noise_amp,noise_amp, add_units(noise_bandwidth_Hz,2,"Hz",value_string[0]),add_units(1.0/delta_time,2,"Hz",value_string[1]));
+					unfiltered_noise_amp,noise_amp, add_units_2(noise_bandwidth_Hz,2,0,0,"Hz",value_string[0]),add_units_2(1.0/delta_time,2,0,0,"Hz",value_string[1]));
 					}
 				}
 		#endif
@@ -871,10 +871,10 @@ else
 	mean_vout_filtered_du = 0.0;
 	if (vout_filtered_max < vout_threshold)
 		printf("Filtered output waveform has a maximum of %s and does not cross threshold of %s.\n",
-		add_units(vout_filtered_max,1,"V",value_string[1]),add_units(vout_threshold,1,"V",value_string[0]));
+		add_units_2(vout_filtered_max,1,0,0,"V",value_string[1]),add_units_2(vout_threshold,1,0,0,"V",value_string[0]));
 	else
 		printf("Filtered output waveform has a minimum of %s and does not cross threshold of %s.\n",
-		add_units(vout_filtered_min,1,"V",value_string[1]),add_units(vout_threshold,1,"V",value_string[0]));
+		add_units_2(vout_filtered_min,1,0,0,"V",value_string[1]),add_units_2(vout_threshold,1,0,0,"V",value_string[0]));
 	}
 
 /* End of compute duty cycle of filtered waveform */
@@ -888,7 +888,7 @@ fpw1 = fopen(pfnameout,"w");
 #ifdef DEBUG_SQUARE_WAVE
 	if (tau_vout_sec != 0.0)
 		{
-   	fprintf(fpw1,"Time (sec),vsin (V),vsin_pm (V),vsq (V),vout (V),vout filtered (V) tau = %s (%s)\n",add_units(tau_vout_sec,3,"s",value_string[0]),add_units(1.0/(2.0*pi*tau_vout_sec),2,"Hz",value_string[1]));
+   	fprintf(fpw1,"Time (sec),vsin (V),vsin_pm (V),vsq (V),vout (V),vout filtered (V) tau = %s (%s)\n",add_units_2(tau_vout_sec,3,0,0,"s",value_string[0]),add_units_2(1.0/(2.0*pi*tau_vout_sec),2,0,0,"Hz",value_string[1]));
    	}
    else
 		{
@@ -897,7 +897,7 @@ fpw1 = fopen(pfnameout,"w");
 #else
 	if (tau_vout_sec != 0.0)
 		{
-		fprintf(fpw1,"Time (s),vout filtered (V) tau = %s (%s)\n",add_units(tau_vout_sec,3,"s",value_string[0]),add_units(1.0/(2.0*pi*tau_vout_sec),3,"Hz",value_string[1]));
+		fprintf(fpw1,"Time (s),vout filtered (V) tau = %s (%s)\n",add_units_2(tau_vout_sec,3,0,0,"s",value_string[0]),add_units_2(1.0/(2.0*pi*tau_vout_sec),3,0,0,"Hz",value_string[1]));
    	}
    else
 		{
@@ -927,18 +927,6 @@ for (i = 0; i < num_points_per_period*num_periods; i++)
       }
    }
 fclose(fpw1);
-
-free(time_sec);
-free(vsin);
-free(vsin_pm);
-free(vsq);
-free(vout);
-free(vout_filtered);
-free(am_noise);
-free(pm_noise);
-free(vth_cross_rise);
-free(vth_cross_fall);
-free(duty_cycle);
  
 if (noise_amp != 0.0)
    {
@@ -966,18 +954,18 @@ else
 			{
 			if ( noise_type == GAUSSIAN_NOISE)
 				{
-				sprintf(ptitle_string,"{/:Bold %s Square Wave (Du = %.1f%%, tr = %.1f%%, tf = %.1f%%) %s Modulated by Gaussian Random Noise}\n{/:Bold modulation index (3 sigma) = %s, noise bandwidth = %s, sampling frequency = %s}",add_units(freq_Hz,2,"Hz",value_string[0]),duty_cycle_percent,ttran_rise_percent,ttran_fall_percent,pmodulation_string,add_units(noise_amp,1,"",value_string[1]),add_units(noise_bandwidth_Hz,2,"Hz",value_string[2]),add_units(1.0/delta_time,2,"Hz",value_string[3]));
+				sprintf(ptitle_string,"{/:Bold %s Square Wave (Du = %.1f%%, tr = %.1f%%, tf = %.1f%%) %s Modulated by Gaussian Random Noise}\n{/:Bold modulation index (3 sigma) = %s, noise bandwidth = %s, sampling frequency = %s}",add_units_2(freq_Hz,2,0,0,"Hz",value_string[0]),duty_cycle_percent,ttran_rise_percent,ttran_fall_percent,pmodulation_string,add_units_2(noise_amp,1,0,0,"",value_string[1]),add_units_2(noise_bandwidth_Hz,2,0,0,"Hz",value_string[2]),add_units_2(1.0/delta_time,2,0,0,"Hz",value_string[3]));
 				}
 			else
 				{
-				sprintf(ptitle_string,"{/:Bold %s Square Wave (Du = %.1f%%, tr = %.1f%%, tf = %.1f%%) %s Modulated by Uniform Random Noise}\n{/:Bold modulation index (range/2) = %s, noise bandwidth = %s, sampling frequency = %s}",add_units(freq_Hz,2,"Hz",value_string[0]),duty_cycle_percent,ttran_rise_percent,ttran_fall_percent,pmodulation_string,add_units(noise_amp,1,"",value_string[1]),add_units(noise_bandwidth_Hz,2,"Hz",value_string[2]),add_units(1.0/delta_time,2,"Hz",value_string[3]));
+				sprintf(ptitle_string,"{/:Bold %s Square Wave (Du = %.1f%%, tr = %.1f%%, tf = %.1f%%) %s Modulated by Uniform Random Noise}\n{/:Bold modulation index (range/2) = %s, noise bandwidth = %s, sampling frequency = %s}",add_units_2(freq_Hz,2,0,0,"Hz",value_string[0]),duty_cycle_percent,ttran_rise_percent,ttran_fall_percent,pmodulation_string,add_units_2(noise_amp,1,0,0,"",value_string[1]),add_units_2(noise_bandwidth_Hz,2,0,0,"Hz",value_string[2]),add_units_2(1.0/delta_time,2,0,0,"Hz",value_string[3]));
 				}
 			}
 		else
-			sprintf(ptitle_string,"{/:Bold %s Square Wave (Du = %.1f%%, tr = %.1f%%, tf = %.1f%%) %s Modulated by Sinusoidal Signal}\n{/:Bold modulation index = %s, modulation frequency = %s, sampling frequency = %s}",add_units(freq_Hz,2,"Hz",value_string[0]),duty_cycle_percent,ttran_rise_percent,ttran_fall_percent,pmodulation_string,add_units(noise_amp,1,"",value_string[1]),add_units(noise_bandwidth_Hz,2,"Hz",value_string[2]),add_units(1.0/delta_time,2,"Hz",value_string[3]));
+			sprintf(ptitle_string,"{/:Bold %s Square Wave (Du = %.1f%%, tr = %.1f%%, tf = %.1f%%) %s Modulated by Sinusoidal Signal}\n{/:Bold modulation index = %s, modulation frequency = %s, sampling frequency = %s}",add_units_2(freq_Hz,2,0,0,"Hz",value_string[0]),duty_cycle_percent,ttran_rise_percent,ttran_fall_percent,pmodulation_string,add_units_2(noise_amp,1,0,0,"",value_string[1]),add_units_2(noise_bandwidth_Hz,2,0,0,"Hz",value_string[2]),add_units_2(1.0/delta_time,2,0,0,"Hz",value_string[3]));
 		}
 	else
-		sprintf(ptitle_string,"{/:Bold %s Square Wave (Du = %.1f%%, tr = %.1f%%, tf = %.1f%%)}\n{/:Bold sampling frequency = %s}",add_units(freq_Hz,2,"Hz",value_string[0]),duty_cycle_percent,ttran_rise_percent,ttran_fall_percent,add_units(1.0/delta_time,2,"Hz",value_string[3]));
+		sprintf(ptitle_string,"{/:Bold %s Square Wave (Du = %.1f%%, tr = %.1f%%, tf = %.1f%%)}\n{/:Bold sampling frequency = %s}",add_units_2(freq_Hz,2,0,0,"Hz",value_string[0]),duty_cycle_percent,ttran_rise_percent,ttran_fall_percent,add_units_2(1.0/delta_time,2,0,0,"Hz",value_string[3]));
 	
 	sprintf(pinput_string,"head -1 %s > ./.%s\n",pfnameout,pfnameout);
 	system(pinput_string);
@@ -1064,6 +1052,18 @@ if (num_points_per_period*num_periods > 10000)
 	sprintf(pinput_string,"gzip %s\n",pfnameout);
 	system(pinput_string);
 	}
+
+free(time_sec);
+free(vsin);
+free(vsin_pm);
+free(vsq);
+free(vout);
+free(vout_filtered);
+free(am_noise);
+free(pm_noise);
+free(vth_cross_rise);
+free(vth_cross_fall);
+free(duty_cycle);
 
 
 return EXIT_SUCCESS;
