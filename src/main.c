@@ -546,7 +546,7 @@ else
 			fprintf(fp_noise,"Time (sec),noise (m%%),filtered noise (m%%)\n");
 		#endif
 		}
-		
+
    for (i = 0; i < num_points_per_period*(num_periods + 1 + settling_periods) + 2; i++)
       {
 		time_sec[i] = delta_time *((double) i);
@@ -769,7 +769,7 @@ for (i = 0; i < num_points_per_period*(num_periods + 1 + settling_periods) + 2; 
 		}
 	}
 
-for (i = j; i < num_points_per_period*(num_periods + 1 + settling_periods + 2);i++)
+for (i = j; i < num_points_per_period*(num_periods + 1 + settling_periods) + 2;i++)
 	{
 	time_sec[i] = 0.0;
 	vsin_pm[i] = 0.0;
