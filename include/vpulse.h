@@ -6,6 +6,11 @@
 #include <ctype.h>
 #include <sys/stat.h>
 
+/*Add #defines for version number*/
+
+#define VERSION_NUMBER	2.12
+#define VERSION_DATE "6/26/2024"
+
 /*Add defines for debugging*/
 
 /* #define DEBUG_NOISE
@@ -14,15 +19,16 @@
 #define DEBUG_SQUARE_WAVE
 #define FILTER_VOUT */
 
+/* Print gnuplot or jiterhistv16 commands to terminal if PRINT_GNUPLOT_COMMAND */
+/* or PRINT_JITTERHIST_COMMAND are defined */
+
+/* #define PRINT_GNUPLOT_COMMAND */
+/* #define PRINT_JITTERHIST_COMMAND */
+
 #define VOUT_BANDWIDTH_MULTIPLIER 50.0
 #define MAXIMUM_BANDWIDTH_MULTIPLIER 1000.0
 #define COMPUTE_JITTER
 #define MINIMUM_NUMBER_THRESHOLD_CROSSINGS 2
-
-/*Add #defines for version number*/
-
-#define VERSION_NUMBER	2.11
-#define VERSION_DATE "6/20/2024"
 
 /* Add #defines for minimum number of points per period based on transition */
 /* times and duty cycle */
@@ -60,7 +66,10 @@ typedef struct {
 
 /* General #defines */
 
-#define LINELENGTH 350
+#define LINELENGTH 128
+#define TITLE_LINELENGTH 255
+#define COMMAND_LINELENGTH 1024
+#define FILENAME_LINELENGTH 255
 #define NUMBER_OF_PROGRESS_POINTS 10.0
 #define TIME_ERROR_MAX 1E-15
 #define SHOWPRPOINT 10
@@ -168,4 +177,4 @@ double s6 = 1.0/4.0;
 double pi;
 #endif
 
-#define PLOTTING_ROUTINES_DIR "/Users/sml/cproj/vpulse/vpulse_v2p11"
+#define PLOTTING_ROUTINES_DIR "/Users/sml/cproj/vpulse/vpulse_v2p12"
