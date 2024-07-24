@@ -1,11 +1,11 @@
 2.4	Program Installation
 
-Version 2.10 of the program is available as the compressed tar file “vpulse_v2p10_043024.tar.gz” and may be downloaded from the URL provided in reference [1].
+Version 2.13 of the program is available as the compressed tar file “vpulse_v2p13_072424.tar.gz” and may be downloaded from the URL provided in reference [1].
 To install the program and create the executable “vpulse”, enter Example command line [3] in the directory in which you wish to locate the program.
 
-$ tar -xvzf vpulse_v2p10_043024.tar.gz						Example command line [3]
+$ tar -xvzf vpulse_v2p13_072424.tar.gz						Example command line [3]
 
-This will create a directory vpulse_v2p10 and extract its directory structure:
+This will create a directory vpulse_v2p13 and extract its directory structure:
 
 Documentation/		example/		plotting_routines/
 README.txt			include/		src/
@@ -19,7 +19,7 @@ Issuing these two commands will create the executable “vpulse” and delete ob
 
 $ vpulse 125e6 45 20 20 50 0 100 250 250					Example command line [1]
 
-This README.txt file is contained in the top level directory of vpulse_v2p10. A script file "runline_example.sh" containing a sample program line is contained in the example directory, and the documentation file in Portable Document Format is contained in the Documentation directory.
+This README.txt file is contained in the top level directory of vpulse_v2p13. A script file "runline_example.sh" containing a sample program line is contained in the example directory, and the documentation file in Portable Document Format is contained in the Documentation directory.
  
 References:
 
@@ -27,3 +27,4 @@ References:
 
 1/2/2024
 rev. 4/30/2024
+rev. 7/24/2024

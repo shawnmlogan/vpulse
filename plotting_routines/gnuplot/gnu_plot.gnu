@@ -33,7 +33,12 @@ x_limit_min = xtick_increment * (floor(x_min/xtick_increment + 0.50) - 0.00);
 x_limit_max = xtick_increment * (0.0 + ceil(x_max/xtick_increment + 0.00));
 
 set xrange [x_limit_min:x_limit_max];
+
+if (floor(x_limit_max - x_limit_min) < 5) {
 set xtics x_limit_min,xtick_increment,x_limit_max;
+} else {
+set xtics x_limit_min,2*xtick_increment,x_limit_max;
+}
 
 set yrange [-200:1200];
 set ytics -200,200,1200;
@@ -43,7 +48,7 @@ set grid y lw 1.5;
 set grid xtics;
 set grid ytics;
 set grid mxtics;
-set format x "%.2e";
+set format x "%.3e";
 set format y "%.0f";
 set key center top default opaque;
 set border back;
