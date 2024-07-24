@@ -67,7 +67,7 @@ char *ptitle_string, title_string[TITLE_LINELENGTH + 1];
 char *poctave = "octave",*poctave_path,octave_path[LINELENGTH + 1];
 char *pgnuplot = "gnuplot",*pgnuplot_path,gnuplot_path[LINELENGTH + 1];
 char *pgimp = "gimp",*pgimp_path,gimp_path[LINELENGTH + 1];
-char *pjitterhistv16 = "jitterhistv16",*pjitterhistv16_path,jitterhistv16_path[LINELENGTH + 1];
+char *pjitterhist = "jitterhist",*pjitterhist_path,jitterhist_path[LINELENGTH + 1];
 char *ppsd_sppowr = "psd_sppowr",*ppsd_sppowr_path,psd_sppowr_path[LINELENGTH + 1];
 char plot_preference[LINELENGTH + 1];
 
@@ -106,7 +106,7 @@ ptitle_string = &title_string[0];
 poctave_path = &octave_path[0];
 pgnuplot_path = &gnuplot_path[0];
 pgimp_path = &gimp_path[0];
-pjitterhistv16_path = &jitterhistv16_path[0];
+pjitterhist_path = &jitterhist_path[0];
 ppsd_sppowr_path = &psd_sppowr_path[0];
 
 printf("\nvpulse v%.2f %s\n\n",VERSION_NUMBER,VERSION_DATE);
@@ -1027,9 +1027,9 @@ else
 
 if (num_crossings > MINIMUM_NUMBER_THRESHOLD_CROSSINGS)
 	{
-	if ((check_executable(pjitterhistv16,pjitterhistv16_path)) == 0)
+	if ((check_executable(pjitterhist,pjitterhist_path)) == 0)
 		{
-		printf("Did not locate executable for jitterhistv16 in $PATH.\n");
+		printf("Did not locate executable for jitterhist in $PATH.\n");
 		printf("Disabling all jitter computations.\n");
 		}
 	else
@@ -1045,14 +1045,14 @@ if (num_crossings > MINIMUM_NUMBER_THRESHOLD_CROSSINGS)
 		if ((duty_cycle_percent > 89.0) || (duty_cycle_percent < 11.0))
 			num_samples_moving_average = 0;
 	#ifdef DEBUG_SQUARE_WAVE
-			snprintf(psys_command_1,COMMAND_LINELENGTH,"jitterhistv16 %s 6 %s %.4e 0.50 %d y n %.4e\n",
+			snprintf(psys_command_1,COMMAND_LINELENGTH,"jitterhist %s 6 %s %.4e 0.50 %d y n %.4e\n",
 			pfnameout,pfnameout_jitter,1e-09/delta_time,num_samples_moving_average,1e-06*freq_Hz);
 			#ifdef PRINT_JITTERHIST_COMMAND
 				printf("%s",psys_command_1);
 			#endif
 			system(psys_command_1);
 	#else
-			snprintf(psys_command_1,COMMAND_LINELENGTH,"jitterhistv16 %s 2 %s %.4e 0.50 %d y n %.4e\n",
+			snprintf(psys_command_1,COMMAND_LINELENGTH,"jitterhist %s 2 %s %.4e 0.50 %d y n %.4e\n",
 			pfnameout,pfnameout_jitter,1e-09/delta_time,num_samples_moving_average,1e-06*freq_Hz);
 			#ifdef PRINT_JITTERHIST_COMMAND
 				printf("%s",psys_command_1);

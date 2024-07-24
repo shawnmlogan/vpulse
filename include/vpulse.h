@@ -8,8 +8,8 @@
 
 /*Add #defines for version number*/
 
-#define VERSION_NUMBER	2.12
-#define VERSION_DATE "6/26/2024"
+#define VERSION_NUMBER	2.13
+#define VERSION_DATE "7/24/2024"
 
 /*Add defines for debugging*/
 
