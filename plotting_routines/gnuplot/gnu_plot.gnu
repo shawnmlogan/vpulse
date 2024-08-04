@@ -24,17 +24,17 @@ set title offset graph -0.02,0.0;
 set xlabel 'Time (s)';
 set ylabel 'Square Wave Amplitude (mV)';
 
-max_num_ticks = 10;
-base = 10.0;
+max_num_ticks = 8;
+base = 4.0;
 xtick_increment = (x_max - x_min)/max_num_ticks;
 xtick_increment = base**(floor(log10(xtick_increment)/log10(base) + 0.50));
+
 
 x_limit_min = xtick_increment * (floor(x_min/xtick_increment + 0.50) - 0.00);
 x_limit_max = xtick_increment * (0.0 + ceil(x_max/xtick_increment + 0.00));
 
 set xrange [x_limit_min:x_limit_max];
-
-if (floor(x_limit_max - x_limit_min) < 5) {
+if ((x_limit_max - x_limit_min)/xtick_increment < max_num_ticks) {
 set xtics x_limit_min,xtick_increment,x_limit_max;
 } else {
 set xtics x_limit_min,2*xtick_increment,x_limit_max;
