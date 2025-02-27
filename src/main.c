@@ -34,6 +34,9 @@ int noise_location = ENTERED_NOISE_AMP_IS_FILTERED;
 int modulation_type = AM_MODULATION;
 int end_flag = 0;
 int num_samples_moving_average = 12;
+/* Flags for performing psd and jitter analyses */
+int perform_tie_analysis_flag = DEFAULT_COMPUTE_JITTER, perform_psd_analysis_flag = DEFAULT_COMPUTE_PSD;
+int yes_no_value = 0, number_of_prompts = 1; 
 
 unsigned int seed;
 
@@ -69,6 +72,9 @@ char *pgnuplot = "gnuplot",*pgnuplot_path,gnuplot_path[LINELENGTH + 1];
 char *pgimp = "gimp",*pgimp_path,gimp_path[LINELENGTH + 1];
 char *pjitterhist = "jitterhist",*pjitterhist_path,jitterhist_path[LINELENGTH + 1];
 char *ppsd_sppowr = "psd_sppowr",*ppsd_sppowr_path,psd_sppowr_path[LINELENGTH + 1];
+char *pyes_no_psd_string, yes_no_psd_string[LINELENGTH + 1];
+char *pyes_no_tie_string, yes_no_tie_string[LINELENGTH + 1];
+char *pyes_string = "yes", *pno_string = "no";
 char plot_preference[LINELENGTH + 1];
 
 clock_t tic,toc;
@@ -108,34 +114,37 @@ pgnuplot_path = &gnuplot_path[0];
 pgimp_path = &gimp_path[0];
 pjitterhist_path = &jitterhist_path[0];
 ppsd_sppowr_path = &psd_sppowr_path[0];
+pyes_no_psd_string = &yes_no_psd_string[0];
+pyes_no_tie_string = &yes_no_tie_string[0];
+
 
 printf("\nvpulse v%.2f %s\n\n",VERSION_NUMBER,VERSION_DATE);
 
-if ((argc != 15) && (argc != 10))
+if ((argc != 17) && (argc != 15) && (argc != 12) && (argc != 10))
 	{
-	for (i = 0;i<argc;i++)
+	/* for (i = 0;i<argc;i++)
 		{
 		printf("Argument %ld: %s\n",i,argv[i]);
-		}
+		} */
 	printf("Detected %d arguments for command line use of \"vpulse\"!\n\n",argc);
-	printf("If the waveform is not amplitude or phase modulated, 9 arguments are required.\n\n");
+	printf("If the waveform is not amplitude or phase modulated, 11 up to arguments are required.\n\n");
 	printf("Usage with command line:\nvpulse <input_square_wave_freq_hz> <initial_phase (degrees)>\n");
 	printf("<trise_per_cent_period> <tfall_per_cent_period> <duty_cycle_percent>\n");
-	printf("<vout RC filter bandwidth multiplier (0 for no bandlimitng)>\n");
-	printf("<num_points_per_period> <num_periods> <num_periods_to_plot>\n\n");
+	printf("<vout RC filter bandwidth multiplier (0 for no bandlimiting)>\n");
+	printf("<num_points_per_period> <num_periods> <num_periods_to_plot> <perform PSD analysis (y/n)> <perform TIE analysis (y/n)>\n\n");
 
-	printf("If the waveform includes amplitude or phase modulation, 13 arguments are required.\n");
-	printf("Following the command line syntax for this second form of \"vpulse\",\nyou will be prompted for all inputs.\n\n");
+	printf("If the waveform includes amplitude or phase modulation, up to 16 arguments are required.\n\n");
 		
 	printf("Usage with command line:\nvpulse <input_square_wave_freq_hz> <initial_phase (degrees)>\n");
 	printf("<trise_per_cent_period> <tfall_per_cent_period> <duty_cycle_percent>\n");
-	printf("<vout RC filter bandwidth multiplier (0 for no bandlimitng)>\n");
+	printf("<vout RC filter bandwidth multiplier (0 for no bandlimiting)>\n");
 	printf("<num_points_per_period> <num_periods> <num_periods_to_plot>\n");
 	printf("<noise_amplitude (modulation index between 0.0 and 1.0)>\n");
 	printf("<noise_amplitude location (filtered (f) or unfiltered(u)))>\n");
 	printf("<noise_type (sinusoidal, gaussian, or uniform)> <noise_bandwidth_Hz>\n");
-	printf("<modulation_type (AM or PM)>\n\n");
-			
+	printf("<modulation_type (AM or PM)> <perform PSD analysis (y/n)> <perform TIE analysis (y/n)>\n\n");
+	
+	printf("You will be prompted for all inputs.\n\n");
 	printf("Enter square wave freq (Hz):\n");
 	fgets(pinput_string,LINELENGTH,stdin);
 	remove_carriage_return(pinput_string);
@@ -202,11 +211,54 @@ if ((argc != 15) && (argc != 10))
 	printf("Enter modulation type (AM (a) or PM (p)):\n");
 	fgets(pmodulation_type_string,LINELENGTH,stdin);
 	remove_carriage_return(pmodulation_type_string);
+	
+	printf("Perform PSD analysis (y/n)?:\n");
+	fgets(pinput_string,LINELENGTH,stdin);
+	remove_carriage_return(pinput_string);
+	number_of_prompts = 1;
+	while ((yes_no(pinput_string,&yes_no_value) != EXIT_SUCCESS) && (number_of_prompts < MAX_NUMBER_OF_PROMPTS))
+	   {
+	   printf("Re-enter yes or no.\n");
+		fgets(pinput_string,LINELENGTH,stdin);
+		remove_carriage_return(pinput_string);
+		number_of_prompts++;
+		}
+	if (number_of_prompts > MAX_NUMBER_OF_PROMPTS - 1)
+		{
+		printf("Exiting...too many attempts.\n");
+		exit(0);
+		}
+	else
+		{
+		perform_psd_analysis_flag = yes_no_value;
+		strncpy(pyes_no_psd_string,pinput_string,LINELENGTH);
+		}	
 
+	printf("Perform TIE analysis (y/n)?:\n");
+	fgets(pinput_string,LINELENGTH,stdin);
+	remove_carriage_return(pinput_string);
+	number_of_prompts = 1;
+	while ((yes_no(pinput_string,&yes_no_value) != EXIT_SUCCESS) && (number_of_prompts < MAX_NUMBER_OF_PROMPTS))
+	   {
+	   printf("Re-enter yes or no.\n");
+		fgets(pinput_string,LINELENGTH,stdin);
+		remove_carriage_return(pinput_string);
+		number_of_prompts++;
+		}
+	if (number_of_prompts > MAX_NUMBER_OF_PROMPTS - 1)
+		{
+		printf("Exiting...too many attempts.\n");
+		exit(0);
+		}
+	else
+		{
+		perform_tie_analysis_flag = yes_no_value;
+		strncpy(pyes_no_tie_string,pinput_string,LINELENGTH);
+		}
 	}
 else
 	{
-	if (argc == 15)
+	if ((argc == 15) || (argc == 17) )
 		{
 		strncpy(pinput_string,argv[1],LINELENGTH);
 		freq_Hz = atof(pinput_string);
@@ -249,42 +301,81 @@ else
 	
 		strncpy(pinput_string,argv[14],LINELENGTH);
 		strcpy(pmodulation_type_string,pinput_string);
+		if (argc == 17)
+			{
+			strncpy(pinput_string,argv[15],LINELENGTH);
+			strcpy(pyes_no_psd_string,pinput_string);		
+			strncpy(pinput_string,argv[16],LINELENGTH);
+			strcpy(pyes_no_tie_string,pinput_string);
+			}
+		else
+			{
+			if (perform_tie_analysis_flag == 1)
+				strncpy(pyes_no_tie_string,pyes_string,LINELENGTH);
+			else
+				strncpy(pyes_no_tie_string,pyes_string,LINELENGTH);
+			if (perform_psd_analysis_flag == 1)
+				strncpy(pyes_no_psd_string,pyes_string,LINELENGTH);
+			else
+				strncpy(pyes_no_psd_string,pyes_string,LINELENGTH);
+			}
 		}
 	else
 	   {
-		strncpy(pinput_string,argv[1],LINELENGTH);
-		freq_Hz = atof(pinput_string);
-		
-		strncpy(pinput_string,argv[2],LINELENGTH);
-		init_phase_degrees = atof(pinput_string);
-		
-		strncpy(pinput_string,argv[3],LINELENGTH);
-		ttran_rise_percent = atof(pinput_string);
-		
-		strncpy(pinput_string,argv[4],LINELENGTH);
-		ttran_fall_percent = atof(pinput_string);
-	
-		strncpy(pinput_string,argv[5],LINELENGTH);
-		duty_cycle_percent = atof(pinput_string);
-
-		strncpy(pinput_string,argv[6],LINELENGTH);
-		vout_bandwidth_multiplier = atof(pinput_string);
+		if ((argc == 10) || (argc == 12))
+			{
+			strncpy(pinput_string,argv[1],LINELENGTH);
+			freq_Hz = atof(pinput_string);
 			
-		strncpy(pinput_string,argv[7],LINELENGTH);
-		num_points_per_period = atol(pinput_string);
-	
-		strncpy(pinput_string,argv[8],LINELENGTH);
-		num_periods  = atol(pinput_string);
-	
-		strncpy(pinput_string,argv[9],LINELENGTH);
-		num_periods_to_plot = atol(pinput_string);
+			strncpy(pinput_string,argv[2],LINELENGTH);
+			init_phase_degrees = atof(pinput_string);
+			
+			strncpy(pinput_string,argv[3],LINELENGTH);
+			ttran_rise_percent = atof(pinput_string);
+			
+			strncpy(pinput_string,argv[4],LINELENGTH);
+			ttran_fall_percent = atof(pinput_string);
 		
-		noise_amp = 0.0;
+			strncpy(pinput_string,argv[5],LINELENGTH);
+			duty_cycle_percent = atof(pinput_string);
+	
+			strncpy(pinput_string,argv[6],LINELENGTH);
+			vout_bandwidth_multiplier = atof(pinput_string);
+				
+			strncpy(pinput_string,argv[7],LINELENGTH);
+			num_points_per_period = atol(pinput_string);
+		
+			strncpy(pinput_string,argv[8],LINELENGTH);
+			num_periods  = atol(pinput_string);
+		
+			strncpy(pinput_string,argv[9],LINELENGTH);
+			num_periods_to_plot = atol(pinput_string);
+			
+			noise_amp = 0.0;
+			if (argc == 12)
+				{
+				strncpy(pinput_string,argv[10],LINELENGTH);
+				strcpy(pyes_no_psd_string,pinput_string);		
+				strncpy(pinput_string,argv[11],LINELENGTH);
+				strcpy(pyes_no_tie_string,pinput_string);
+				}
+			else
+				{
+				if (perform_tie_analysis_flag == 1)
+					strncpy(pyes_no_tie_string,pyes_string,LINELENGTH);
+				else
+					strncpy(pyes_no_tie_string,pyes_string,LINELENGTH);
+				if (perform_psd_analysis_flag == 1)
+					strncpy(pyes_no_psd_string,pyes_string,LINELENGTH);
+				else
+					strncpy(pyes_no_psd_string,pyes_string,LINELENGTH);
+				}
+			}
    	}
 	}
 
 if (check_vpulse_inputs(freq_Hz,ttran_rise_percent,ttran_fall_percent,duty_cycle_percent,vout_bandwidth_multiplier,noise_amp,noise_bandwidth_Hz,num_points_per_period,num_periods_to_plot,num_periods,pnoise_type_string,&noise_type,pnoise_location_string,&noise_location,
-pmodulation_type_string,&modulation_type,init_phase_degrees,&init_phase_rad) != EXIT_SUCCESS)
+pmodulation_type_string,&modulation_type,init_phase_degrees,&init_phase_rad,pyes_no_psd_string,&perform_psd_analysis_flag,pyes_no_tie_string,&perform_tie_analysis_flag) != EXIT_SUCCESS)
 		{
 		printf("Correct inputs and try again...\n");
 		exit(0);
@@ -639,7 +730,7 @@ for (i = 0;i < num_points_per_period*(num_periods + 1 + settling_periods) + 2;i+
 	vsin_pm[i] = sin(2.0*pi*time_sec[i]*freq_Hz + pm_noise[i]*2.0*pi + init_phase_rad);
 	if (vsin[i] >= vthreshold)
 		{
-		vsq[i] = 1.0;
+		vsq[i] = 0.50;
 		if (i > 0)
 			{
 			if ((vsin[i] >= vthreshold) && (vsin[i - 1] < vthreshold))
@@ -650,12 +741,12 @@ for (i = 0;i < num_points_per_period*(num_periods + 1 + settling_periods) + 2;i+
 			}
 		else
 			{
-			vsq[i] = 1.0;
+			vsq[i] = 0.50;
 			}
 		}
 	else
 		{
-		vsq[i] = 0.0;
+		vsq[i] = -0.50;
 		if (i > 0)
 			{
 			if ((vsin[i] <= vthreshold) && (vsin[i - 1] > vthreshold))
@@ -666,7 +757,7 @@ for (i = 0;i < num_points_per_period*(num_periods + 1 + settling_periods) + 2;i+
 			}
 			else
 				{
-				vsq[i] = 0.0;
+				vsq[i] = -0.50;
 				}
 			}
 		}
@@ -705,23 +796,24 @@ k = 0;
 
 for (i = 0; i < num_points_per_period*(num_periods + 1 + settling_periods) + 2; i++)
 	{
-	if((time_sec[i] >= (vth_cross_rise[j] - ttran_rise/2.0)) && (time_sec[i] < (vth_cross_rise[j] + ttran_rise/2.0)))
-		vout[i] = 0.50 + (time_sec[i] - vth_cross_rise[j])/ttran_rise;
+	if((time_sec[i] >= (vth_cross_rise[j] - ttran_rise/2.0)) && (time_sec[i] < (vth_cross_rise[j] + ttran_rise/2.0)) && (ttran_rise != 0.0))
+		vout[i] = 0.0 + (time_sec[i] - vth_cross_rise[j])/ttran_rise;
 	else
 		{
-		if((time_sec[i] >= (vth_cross_fall[k] - ttran_fall/2.0)) && (time_sec[i] < (vth_cross_fall[k] + ttran_fall/2.0)))
-			 vout[i] = 0.50 + (vth_cross_fall[k] - time_sec[i])/ttran_fall;
+		if((time_sec[i] >= (vth_cross_fall[k] - ttran_fall/2.0)) && (time_sec[i] < (vth_cross_fall[k] + ttran_fall/2.0)) && (ttran_fall != 0.0))
+			 vout[i] = 0.0 + (vth_cross_fall[k] - time_sec[i])/ttran_fall;
 		else
 			{
-			if (i > 0)
+			vout[i] = vsq[i];
+/*			if (i > 0)
 				{
-				if (vout[i - 1] > 0.50)
-					vout[i] = 1.0;
+				if (vout[i - 1] > 0.00)
+					vout[i] = 0.50;
 				else
-					vout[i] = 0.0;
+					vout[i] = -0.50;
 				}
 			else
-				vout[i] = vsq[0];
+				vout[i] = vsq[0]; */
 			}
 		}
 	if (((time_sec[i + 1] - vth_cross_rise[j]) >= ttran_rise/2.0) && (j < length_vth_cross_rise))
@@ -745,8 +837,8 @@ for (i = 0; i < num_points_per_period*(num_periods + 1 + settling_periods) + 2; 
 		{
 		time_sec[j] = time_sec[i] = delta_time *((double) j);
 		vsin_pm[j] = vsin_pm[i]*(1.0 + am_noise[i]);
-		vsq[j] = vsq[i]*(1.0 + am_noise[i]);
-		vout[j] = vout[i]*(1.0 + am_noise[i]);
+		vsq[j] = 0.50 + vsq[i]*(1.0 + am_noise[i]);
+		vout[j] = 0.50 + vout[i]*(1.0 + am_noise[i]);
 		if (j > 0)
 			{
 			if (tau_vout_sec != 0.0)
@@ -1008,63 +1100,66 @@ else
 		}	
 	}
 
-if ((check_executable(ppsd_sppowr,ppsd_sppowr_path)) == 0)
+if (perform_psd_analysis_flag == 1)
 	{
-	printf("Did not locate executable for psd_sppowr in $PATH.\n");
-	printf("Disabling power spectral density analysis and plot.\n");
-	}
-else
-	{
-#ifdef DEBUG_SQUARE_WAVE
-	snprintf(psys_command_1,COMMAND_LINELENGTH,"psd_sppowr %s 1 6 4 0 7\n",pfnameout);
-#else
-	snprintf(psys_command_1,COMMAND_LINELENGTH,"psd_sppowr %s 1 2 4 0 7\n",pfnameout);
-#endif
-	system(sys_command_1);
-	}
-
-#ifdef COMPUTE_JITTER
-
-if (num_crossings > MINIMUM_NUMBER_THRESHOLD_CROSSINGS)
-	{
-	if ((check_executable(pjitterhist,pjitterhist_path)) == 0)
+	if ((check_executable(ppsd_sppowr,ppsd_sppowr_path)) == 0)
 		{
-		printf("Did not locate executable for jitterhist in $PATH.\n");
-		printf("Disabling all jitter computations.\n");
+		printf("Did not locate executable for psd_sppowr in $PATH.\n");
+		printf("Disabling power spectral density analysis and plot.\n");
 		}
 	else
 		{
-		/* Create jitter file name, remove 3 digit extension and */
-		/* append "_jitter" and replace extension */
-		
-		if (append_filename_keep_N_characters(pfnameout,pfnameout_jitter,"_jitter",strlen(ptimestamp) + 5,LINELENGTH + 1) != EXIT_SUCCESS)
-			{
-			printf("Error in created corrected filename from function append_filename_keep_extension()\n");
-			exit(0);
-			}
-		if ((duty_cycle_percent > 89.0) || (duty_cycle_percent < 11.0))
-			num_samples_moving_average = 0;
 	#ifdef DEBUG_SQUARE_WAVE
-			snprintf(psys_command_1,COMMAND_LINELENGTH,"jitterhist %s 6 %s %.4e 0.50 %d y n %.4e\n",
-			pfnameout,pfnameout_jitter,1e-09/delta_time,num_samples_moving_average,1e-06*freq_Hz);
-			#ifdef PRINT_JITTERHIST_COMMAND
-				printf("%s",psys_command_1);
-			#endif
-			system(psys_command_1);
+		snprintf(psys_command_1,COMMAND_LINELENGTH,"psd_sppowr %s 1 6 4 0 7\n",pfnameout);
 	#else
-			snprintf(psys_command_1,COMMAND_LINELENGTH,"jitterhist %s 2 %s %.4e 0.50 %d y n %.4e\n",
-			pfnameout,pfnameout_jitter,1e-09/delta_time,num_samples_moving_average,1e-06*freq_Hz);
-			#ifdef PRINT_JITTERHIST_COMMAND
-				printf("%s",psys_command_1);
-			#endif
-			system(psys_command_1);
+		snprintf(psys_command_1,COMMAND_LINELENGTH,"psd_sppowr %s 1 2 4 0 7\n",pfnameout);
 	#endif
+		system(sys_command_1);
 		}
 	}
-else
-	printf("Too few threshold crossings (%ld) to accurately estimate jitter. No jitter analysis performed.\n",
-	num_crossings);
-#endif
+
+if (perform_tie_analysis_flag == 1)
+	{
+	if (num_crossings > MINIMUM_NUMBER_THRESHOLD_CROSSINGS - 1)
+		{
+		if ((check_executable(pjitterhist,pjitterhist_path)) == 0)
+			{
+			printf("Did not locate executable for jitterhist in $PATH.\n");
+			printf("Disabling all jitter computations.\n");
+			}
+		else
+			{
+			/* Create jitter file name, remove 3 digit extension and */
+			/* append "_jitter" and replace extension */
+			
+			if (append_filename_keep_N_characters(pfnameout,pfnameout_jitter,"_jitter",strlen(ptimestamp) + 5,LINELENGTH + 1) != EXIT_SUCCESS)
+				{
+				printf("Error in created corrected filename from function append_filename_keep_extension()\n");
+				exit(0);
+				}
+			if ((duty_cycle_percent > 89.0) || (duty_cycle_percent < 11.0))
+				num_samples_moving_average = 0;
+		#ifdef DEBUG_SQUARE_WAVE
+				snprintf(psys_command_1,COMMAND_LINELENGTH,"jitterhist %s 6 %s %.4e 0.50 %d y n %.4e\n",
+				pfnameout,pfnameout_jitter,1e-09/delta_time,num_samples_moving_average,1e-06*freq_Hz);
+				#ifdef PRINT_JITTERHIST_COMMAND
+					printf("%s",psys_command_1);
+				#endif
+				system(psys_command_1);
+		#else
+				snprintf(psys_command_1,COMMAND_LINELENGTH,"jitterhist %s 2 %s %.4e 0.50 %d y n %.4e\n",
+				pfnameout,pfnameout_jitter,1e-09/delta_time,num_samples_moving_average,1e-06*freq_Hz);
+				#ifdef PRINT_JITTERHIST_COMMAND
+					printf("%s",psys_command_1);
+				#endif
+				system(psys_command_1);
+		#endif
+			}
+		}
+	else
+		printf("Too few threshold crossings (%ld) to accurately estimate jitter. No jitter analysis performed.\n",
+		num_crossings);
+	}
 
 if (num_points_per_period*num_periods > 10000)
 	{

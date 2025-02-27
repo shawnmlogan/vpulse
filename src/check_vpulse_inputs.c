@@ -1,8 +1,8 @@
 #include "vpulse.h"
 
-int check_vpulse_inputs(double freq_Hz,double ttran_rise_percent,double ttran_fall_percent,double duty_cycle_percent, double vout_bandwidth_multiplier, double noise_amp, double noise_bandwidth_Hz, long int num_points_per_period, long int num_periods_to_plot, long int num_periods, char * pnoise_type_string, int *noise_type, char *pnoise_location_string, int *noise_location, char * pmodulation_type_string, int *modulation_type, double init_phase_degrees, double *init_phase_rad)
+int check_vpulse_inputs(double freq_Hz,double ttran_rise_percent,double ttran_fall_percent,double duty_cycle_percent, double vout_bandwidth_multiplier, double noise_amp, double noise_bandwidth_Hz, long int num_points_per_period, long int num_periods_to_plot, long int num_periods, char * pnoise_type_string, int *noise_type, char *pnoise_location_string, int *noise_location, char * pmodulation_type_string, int *modulation_type, double init_phase_degrees, double *init_phase_rad, char *pyes_no_psd_string, int *pperform_psd_analysis_flag, char *pyes_no_tie_string, int *pperform_tie_analysis_flag)
 {
-int return_status = EXIT_SUCCESS;
+int return_status = EXIT_SUCCESS, yes_no_value = 0;
 char value_string[NUMBER_OF_VALUE_STRINGS][LINELENGTH_OF_VALUE_STRING + 1];
 
    if (freq_Hz <= 0.0)
@@ -13,18 +13,20 @@ char value_string[NUMBER_OF_VALUE_STRINGS][LINELENGTH_OF_VALUE_STRING + 1];
 
 *init_phase_rad = init_phase_degrees*pi/180.0;
 		
-if (ttran_rise_percent <= 0.0)
+if (ttran_rise_percent < 0.0)
    	{
-   	printf("Enter rise time greater than 0 %%, read value of %1.2e.\n",ttran_rise_percent);
+   	printf("Enter rise time greater than or equal to 0 %%, read value of %1.2e.\n",ttran_rise_percent);
    	return_status = EXIT_FAILURE;
    	}
    	
-if (ttran_fall_percent <= 0.0)
+if (ttran_fall_percent < 0.0)
    	{
-   	printf("Enter fall time greater than 0 %%, read value of %1.2e.\n",ttran_fall_percent);
+   	printf("Enter fall time greater than or equal to 0 %%, read value of %1.2e.\n",ttran_fall_percent);
    	return_status = EXIT_FAILURE;
    	}
 
+if ((ttran_fall_percent > 0.0) &&  (ttran_rise_percent > 0.0))
+	{
 if (((ttran_rise_percent * (double) num_points_per_period/100.0) < MIN_NUM_POINTS_PER_TRANSIIION) || ((ttran_fall_percent * (double) num_points_per_period/100.0) < MIN_NUM_POINTS_PER_TRANSIIION))
    	{
    	if (ttran_rise_percent <= ttran_fall_percent)
@@ -43,6 +45,7 @@ if (((ttran_rise_percent * (double) num_points_per_period/100.0) < MIN_NUM_POINT
    		}
    	return_status = EXIT_FAILURE;
    	}
+   }
 
 if (duty_cycle_percent < 0.0)
    	{
@@ -116,6 +119,18 @@ else
 if ((num_periods_to_plot > num_periods) || (num_periods_to_plot < 1))
 	{
 	printf("Number of periods to plot must be greater than 1 and less than or equal to num_periods (%ld).\n",num_periods);
+	return_status = EXIT_FAILURE;
+	}
+	
+if (yes_no(pyes_no_psd_string,pperform_psd_analysis_flag) != EXIT_SUCCESS)
+	{
+	printf("Please enter \"yes\" or \"no\" to perform PSD analysis\n");
+	return_status = EXIT_FAILURE;
+	}
+
+if (yes_no(pyes_no_tie_string,pperform_tie_analysis_flag) != EXIT_SUCCESS)
+	{
+	printf("Please enter \"yes\" or \"no\" to perform TIE analysis\n");
 	return_status = EXIT_FAILURE;
 	}
 

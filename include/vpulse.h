@@ -8,18 +8,20 @@
 
 /*Add #defines for version number*/
 
-#define VERSION_NUMBER	2.16
-#define VERSION_DATE "8/9/2024"
+#define VERSION_NUMBER	2.18
+#define VERSION_DATE "2/27/2025"
 
 /*Add defines for debugging*/
 
-/* #define DEBUG_NOISE
-#define DEBUG_DUTY_CYCLE
-#define COMPUTE_JITTER
-#define DEBUG_SQUARE_WAVE
-#define FILTER_VOUT */
+/* #define DEBUG_NOISE */
+/* #define DEBUG_DUTY_CYCLE */
+#define DEFAULT_COMPUTE_JITTER 1
+#define DEFAULT_COMPUTE_PSD 1
+#define MAX_NUMBER_OF_PROMPTS 5
+/* #define DEBUG_SQUARE_WAVE */
+/* #define FILTER_VOUT */
 
-/* Print gnuplot or jiterhistv16 commands to terminal if PRINT_GNUPLOT_COMMAND */
+/* Print gnuplot or jitterhist commands to terminal if PRINT_GNUPLOT_COMMAND */
 /* or PRINT_JITTERHIST_COMMAND are defined */
 
 /* #define PRINT_GNUPLOT_COMMAND */
@@ -27,8 +29,7 @@
 
 #define VOUT_BANDWIDTH_MULTIPLIER 50.0
 #define MAXIMUM_BANDWIDTH_MULTIPLIER 1000.0
-#define COMPUTE_JITTER
-#define MINIMUM_NUMBER_THRESHOLD_CROSSINGS 2
+#define MINIMUM_NUMBER_THRESHOLD_CROSSINGS 64
 
 /* Add #defines for minimum number of points per period based on transition */
 /* times and duty cycle */
@@ -107,13 +108,14 @@ char * add_units_2(double value,int num_digits,int width,int min_string_length,c
 char * add_units_underscore(double value,int num_digits,char *suffix,char *pvalue_string);
 void find_date(char *pdate_string,int max_characters);
 int find_timestamp(char *pdate_string,int max_characters);
+int yes_no(char *pstring,int *preturn_value);
 
 void remove_carriage_return(char *pline);
 int check_executable(char *pprogram_executable,char *preturn_string);
 int double_compare(const void* a, const void* b);
 int parsestring_to_doubles_array(char *pinput_string,double *pdoubles_array,int *parray_size,int max_array_size);
 double mean(double *x, long int N);
-int check_vpulse_inputs(double freq_Hz,double ttran_rise_percent,double ttran_fall_percent,double duty_cycle_percent, double vout_bandwidth_multiplier, double noise_amp, double noise_bandwidth_Hz, long int num_points_per_period, long int num_periods_to_plot, long int num_periods, char * pnoise_type_string, int *noise_type, char *pnoise_location_string, int *noise_location, char * pmodulation_type_string, int *modulation_type, double init_phase_degrees, double *init_phase_rad);
+int check_vpulse_inputs(double freq_Hz,double ttran_rise_percent,double ttran_fall_percent,double duty_cycle_percent, double vout_bandwidth_multiplier, double noise_amp, double noise_bandwidth_Hz, long int num_points_per_period, long int num_periods_to_plot, long int num_periods, char * pnoise_type_string, int *noise_type, char *pnoise_location_string, int *noise_location, char * pmodulation_type_string, int *modulation_type, double init_phase_degrees, double *init_phase_rad, char *pyes_no_psd_string, int *pperform_psd_analysis_flag, char *pyes_no_tie_string, int *pperform_tie_analysis_flag);
 int append_filename_keep_N_characters(char *pfin, char *pfout_appended, char *pappended_string, int N, int max_num_characters);
 
 /*Functions used to compute derivatives of diff equations*/
@@ -177,4 +179,4 @@ double s6 = 1.0/4.0;
 double pi;
 #endif
 
-#define PLOTTING_ROUTINES_DIR "/Users/sml/cproj/vpulse/vpulse_v2p16"
+#define PLOTTING_ROUTINES_DIR "/Users/sml/cproj/vpulse/vpulse_v2p18"
