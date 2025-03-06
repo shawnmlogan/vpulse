@@ -805,7 +805,7 @@ for (i = 0; i < num_points_per_period*(num_periods + 1 + settling_periods) + 2; 
 		else
 			{
 			vout[i] = vsq[i];
-/*			if (i > 0)
+			if (i > 0)
 				{
 				if (vout[i - 1] > 0.00)
 					vout[i] = 0.50;
@@ -813,7 +813,7 @@ for (i = 0; i < num_points_per_period*(num_periods + 1 + settling_periods) + 2; 
 					vout[i] = -0.50;
 				}
 			else
-				vout[i] = vsq[0]; */
+				vout[i] = vsq[0]; 
 			}
 		}
 	if (((time_sec[i + 1] - vth_cross_rise[j]) >= ttran_rise/2.0) && (j < length_vth_cross_rise))

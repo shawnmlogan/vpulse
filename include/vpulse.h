@@ -8,8 +8,8 @@
 
 /*Add #defines for version number*/
 
-#define VERSION_NUMBER	2.18
-#define VERSION_DATE "2/27/2025"
+#define VERSION_NUMBER	2.19
+#define VERSION_DATE "3/5/2025"
 
 /*Add defines for debugging*/
 
@@ -179,4 +179,4 @@ double s6 = 1.0/4.0;
 double pi;
 #endif
 
-#define PLOTTING_ROUTINES_DIR "/Users/sml/cproj/vpulse/vpulse_v2p18"
+#define PLOTTING_ROUTINES_DIR "/Users/sml/cproj/vpulse/vpulse_v2p19"
