@@ -11,7 +11,7 @@ double *time_sec, *vsin, *vsin_pm, *vsq, *vout, *vout_filtered, *pm_noise, *am_n
 double *vth_cross_rise, *vth_cross_fall, *duty_cycle, mean_du = 0.0;
 double init_phase_rad = 0.0, init_phase_degrees = 0.0;
 double prpoint, prtime, TSTART = 0.0;
-double tau=EPSILON, tau_noise_bandwidth_sec;
+double tau = EPSILON, delta_time_epsilon = EPSILON, tau_noise_bandwidth_sec;
 double noise = 0.0, noise_amp = 0.10, unfiltered_noise_amp = 0.0, maximum_delta_noise = 0.0, noise_bandwidth_Hz;
 double noise_vthreshold, filtered_noise = 0.0, last_filtered_noise = 0.0, noise_max = -999.0, noise_min = 999.0;
 double freq_Hz, per_sec, ttran_rise_percent, ttran_rise, ttran_fall_percent, ttran_fall;
@@ -523,7 +523,8 @@ else
 		tau_noise_bandwidth_sec = 1.0/(2*pi*noise_bandwidth_Hz);
 	else
 		tau_noise_bandwidth_sec = 1.0/(2*pi*noise_bandwidth_Hz);	
-	delta_time = per_sec/((double) num_points_per_period - 0.0);	
+	delta_time = per_sec/((double) num_points_per_period - 0.0);
+	delta_time_epsilon = 0.10 * delta_time;	
 	prpoint = delta_time;
 	
 	TSTART = delta_time*( (double) (num_points_per_period*(num_periods - num_periods_to_plot)));
@@ -796,24 +797,45 @@ k = 0;
 
 for (i = 0; i < num_points_per_period*(num_periods + 1 + settling_periods) + 2; i++)
 	{
-	if((time_sec[i] >= (vth_cross_rise[j] - ttran_rise/2.0)) && (time_sec[i] < (vth_cross_rise[j] + ttran_rise/2.0)) && (ttran_rise != 0.0))
+	if ((time_sec[i] >= (vth_cross_rise[j] - ttran_rise/2.0)) && (time_sec[i] < (vth_cross_rise[j] + ttran_rise/2.0)) && (ttran_rise != 0.0))
+		{
 		vout[i] = 0.0 + (time_sec[i] - vth_cross_rise[j])/ttran_rise;
+		/* printf("Rising transition, vout = %1.1f mV at time = %1.3f ns.\n",vout[i]/1e-03,time_sec[i]/1e-09); */
+		}
 	else
 		{
-		if((time_sec[i] >= (vth_cross_fall[k] - ttran_fall/2.0)) && (time_sec[i] < (vth_cross_fall[k] + ttran_fall/2.0)) && (ttran_fall != 0.0))
+		if ((time_sec[i] >= (vth_cross_fall[k] - ttran_fall/2.0)) && (time_sec[i] < (vth_cross_fall[k] + ttran_fall/2.0)) && (ttran_fall != 0.0))
+			{
 			 vout[i] = 0.0 + (vth_cross_fall[k] - time_sec[i])/ttran_fall;
+			 /* printf("Falling transition, vout = %1.1f mV at time = %1.3f ns.\n",vout[i]/1e-03,time_sec[i]/1e-09); */
+			 }
 		else
 			{
-			vout[i] = vsq[i];
-			if (i > 0)
+			if ((fabs(time_sec[i] - vth_cross_rise[j]) <= (delta_time + delta_time_epsilon)) && (ttran_rise == 0.0))
 				{
-				if (vout[i - 1] > 0.00)
-					vout[i] = 0.50;
-				else
-					vout[i] = -0.50;
+				vout[i] = 0.50;
+				/* printf("Rising transition of width 0, vout = %1.1f mV at time = %1.3f ns.\n",vout[i]/1e-03,time_sec[i]/1e-09); */
 				}
 			else
-				vout[i] = vsq[0]; 
+				{
+				if ((fabs(time_sec[i] - vth_cross_fall[k]) <= (delta_time + delta_time_epsilon)) && (ttran_fall == 0.0))
+					{
+					vout[i] = -0.50;
+					/* printf("Falling transition of width 0, vout = %1.1f mV at time = %1.3f ns.\n",vout[i]/1e-03,time_sec[i]/1e-09); */
+					}
+				else
+					{
+					if (i > 0)
+						if (vout[i - 1] >= 0.0)
+							vout[i] = 0.50;
+						else
+							{
+							vout[i] = -0.50;
+							}
+					else
+						vout[i] = vsq[i];
+					}
+				}
 			}
 		}
 	if (((time_sec[i + 1] - vth_cross_rise[j]) >= ttran_rise/2.0) && (j < length_vth_cross_rise))
@@ -830,6 +852,7 @@ for (i = 0; i < num_points_per_period*(num_periods + 1 + settling_periods) + 2; 
 
 /* Remove first period since its initial transition time was not set to ttran_rise nor ttran_fall */
 /* Apply AM modulation to signals */
+
 j = 0;
 for (i = 0; i < num_points_per_period*(num_periods + 1 + settling_periods) + 2; i++)
 	{

@@ -32,11 +32,22 @@ base = 10.0;
 xtick_increment = (x_max - x_min)/max_num_ticks;
 xtick_increment = base**(floor(log10(xtick_increment)/log10(base) + 0.50));
 
-x_limit_min = xtick_increment * (floor(x_min/xtick_increment + 0.50) - 0.00);
-x_limit_max = xtick_increment * (0.0 + ceil(x_max/xtick_increment + 0.00));
+x_limit_min = xtick_increment * floor(x_min/xtick_increment);
+x_limit_max = xtick_increment * ceil(x_max/xtick_increment);
 
-set xrange [x_limit_min:x_limit_max];
+if ((x_limit_max - x_limit_min)/xtick_increment < max_num_ticks) {
 set xtics x_limit_min,xtick_increment,x_limit_max;
+} else {
+	if ((x_limit_max - x_limit_min)/xtick_increment >= 2*max_num_ticks) {
+		x_limit_max = x_limit_min + ceil((x_limit_max - x_limit_min)/(4*xtick_increment))*(4*xtick_increment);
+		set xtics x_limit_min,4*xtick_increment,x_limit_max;
+		set mxtics 2;
+	} else {
+		set xtics x_limit_min,2*xtick_increment,x_limit_max;
+		set mxtics 2;
+	}	
+}
+set xrange [x_limit_min:x_limit_max];
 
 set yrange [-200:1200];
 set ytics -200,200,1200;
@@ -45,9 +56,9 @@ set y2range [-1200:1200];
 set grid x lw 1.5;
 set grid y lw 1.5;
 set grid xtics;
-set grid ytics;
 set grid mxtics;
-set format x "%.2e";
+set grid ytics;
+set format x "%g";
 set format y "%.0f";
 set grid y2;
 set key left top default box opaque;

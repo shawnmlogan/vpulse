@@ -27,7 +27,7 @@ set title offset graph -0.02,0.0;
 set xlabel 'Time (s)';
 set ylabel 'Square Wave Amplitude (mV)';
 
-max_num_ticks = 8;
+max_num_ticks = 10;
 base = 10.0;
 xtick_increment = (x_max - x_min)/max_num_ticks;
 xtick_increment = base**(floor(log10(xtick_increment)/log10(base) + 0.50));
@@ -75,8 +75,8 @@ set yrange [y_limit_min:y_limit_max];
 set grid x lw 1.5;
 set grid y lw 1.5;
 set grid xtics;
-set grid ytics;
 set grid mxtics;
+set grid ytics;
 
 if ((x_limit_max - x_limit_min > 1) && (x_limit_max - x_limit_min < 10000)) {
 num_digits = floor(log10(abs(x_limit_max)/xtick_increment));
@@ -84,7 +84,7 @@ format_specifier = sprintf("%%.%df",num_digits);
 set format x format_specifier;
 } else {
 num_digits = floor(log10(abs(x_limit_max)/xtick_increment));
-format_specifier = sprintf("%%.%de",num_digits);
+format_specifier = sprintf("%%g");
 set format x format_specifier;
 }
 
