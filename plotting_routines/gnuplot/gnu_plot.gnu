@@ -7,7 +7,6 @@ set termopt enhanced;
 # plot_title = ARGV[2];
 # timestamp = ARGV[3];
 
-
 input_filename = sprintf("./.%s.csv",base_filename);
 output_filename = sprintf("%s.png",base_filename);
 
@@ -29,11 +28,15 @@ set ylabel 'Square Wave Amplitude (mV)';
 
 max_num_ticks = 10;
 base = 10.0;
+# print sprintf("x_min = %.6e, x_max = %.6e\n",x_min,x_max);
 xtick_increment = (x_max - x_min)/max_num_ticks;
+# print sprintf("max_num_ticks = %d, base = %.1f, xtick_increment = %.6e,",max_num_ticks,base,xtick_increment);
 xtick_increment = base**(floor(log10(xtick_increment)/log10(base) + 0.50));
+# print sprintf("xtick_increment = %.6e\n",xtick_increment);
 
-x_limit_min = xtick_increment * floor(x_min/xtick_increment);
-x_limit_max = xtick_increment * ceil(x_max/xtick_increment);
+x_limit_min = xtick_increment * floor(x_min/xtick_increment + 0.50);
+x_limit_max = xtick_increment * ceil(x_max/xtick_increment - 0.50);
+# print sprintf("x_limit_min = %.6e, x_limit_max = %.6e\n",x_limit_min,x_limit_max);
 
 if ((x_limit_max - x_limit_min)/xtick_increment < max_num_ticks) {
 set xtics x_limit_min,xtick_increment,x_limit_max;
@@ -48,14 +51,21 @@ set xtics x_limit_min,xtick_increment,x_limit_max;
 	}	
 }
 set xrange [x_limit_min:x_limit_max];
+# print sprintf("x_limit_min = %.6e, x_limit_max = %.6e\n",x_limit_min,x_limit_max);
 
 max_num_ticks = 8;
 base = 10.0;
 ytick_increment = (y_max - y_min)/max_num_ticks;
+# print sprintf("y_min = %.3f, y_max = %.3f\n",y_min,y_max);
+# print sprintf("max_num_ticks = %d, base = %.1f, ytick_increment = %.3f,",max_num_ticks,base,ytick_increment);
 ytick_increment = base**(floor(log10(ytick_increment)/log10(base) + 0.50));
 
+# print sprintf("ytick_increment = %.3f\n",ytick_increment);
+
 y_limit_min = ytick_increment * (floor(y_min/ytick_increment) - 1.0);
-y_limit_max = ytick_increment * (1.0 + ceil(y_max/ytick_increment)); # Allow added height for legend
+y_limit_max = ytick_increment * (2.0 + ceil(y_max/ytick_increment)); # Allow added height for legend
+
+# print sprintf("y_limit_min = %.3f, y_limit_max = %.3f\n",y_limit_min,y_limit_max);
 
 if ((y_limit_max - y_limit_min)/ytick_increment < max_num_ticks) {
 set ytics y_limit_min,ytick_increment,y_limit_max;
@@ -71,6 +81,7 @@ set ytics y_limit_min,ytick_increment,y_limit_max;
 set grid mytics;
 }
 set yrange [y_limit_min:y_limit_max];
+# print sprintf("y_limit_min = %.3f, y_limit_max = %.3f\n",y_limit_min,y_limit_max);
 
 set grid x lw 1.5;
 set grid y lw 1.5;
@@ -79,7 +90,7 @@ set grid mxtics;
 set grid ytics;
 
 if ((x_limit_max - x_limit_min > 1) && (x_limit_max - x_limit_min < 10000)) {
-num_digits = floor(log10(abs(x_limit_max)/xtick_increment));
+num_digits = floor(log10(abs(x_limit_max)/xtick_increment)) - 1;
 format_specifier = sprintf("%%.%df",num_digits);
 set format x format_specifier;
 } else {
@@ -89,7 +100,7 @@ set format x format_specifier;
 }
 
 if ((y_limit_max - y_limit_min > 1) && (y_limit_max - y_limit_min < 10000)) {
-num_digits = floor(log10(abs(y_limit_max)/ytick_increment));
+num_digits = floor(log10(abs(y_limit_max)/ytick_increment)) - 1;
 format_specifier = sprintf("%%.%df",num_digits);
 set format y format_specifier;
 } else {
@@ -112,5 +123,5 @@ set key center default opaque;
 
 set output output_filename;
 replot;
-set terminal pop
+set terminal pop;
 
