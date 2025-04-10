@@ -729,14 +729,14 @@ for (i = 0;i < num_points_per_period*(num_periods + 1 + settling_periods) + 2;i+
 	time_sec[i] = delta_time *((double) i);
 	vsin[i] = sin(2.0*pi*time_sec[i]*freq_Hz + init_phase_rad);
 	vsin_pm[i] = sin(2.0*pi*time_sec[i]*freq_Hz + pm_noise[i]*2.0*pi + init_phase_rad);
-	if (vsin[i] >= vthreshold)
+	if (vsin_pm[i] >= vthreshold)
 		{
 		vsq[i] = 0.50;
 		if (i > 0)
 			{
-			if ((vsin[i] >= vthreshold) && (vsin[i - 1] < vthreshold))
+			if ((vsin_pm[i] >= vthreshold) && (vsin_pm[i - 1] < vthreshold))
 				{
-				vth_cross_rise[length_vth_cross_rise] = time_sec[i] + pm_noise[i]*per_sec;
+				vth_cross_rise[length_vth_cross_rise] = time_sec[i];
 				length_vth_cross_rise++;
 				}
 			}
@@ -750,9 +750,9 @@ for (i = 0;i < num_points_per_period*(num_periods + 1 + settling_periods) + 2;i+
 		vsq[i] = -0.50;
 		if (i > 0)
 			{
-			if ((vsin[i] <= vthreshold) && (vsin[i - 1] > vthreshold))
+			if ((vsin_pm[i] <= vthreshold) && (vsin_pm[i - 1] > vthreshold))
 				{
-				vth_cross_fall[length_vth_cross_fall] = time_sec[i] + pm_noise[i]*per_sec;
+				vth_cross_fall[length_vth_cross_fall] = time_sec[i];
 				length_vth_cross_fall++;
 				}
 			}
@@ -1161,6 +1161,8 @@ if (perform_tie_analysis_flag == 1)
 				exit(0);
 				}
 			if ((duty_cycle_percent > 89.0) || (duty_cycle_percent < 11.0))
+				num_samples_moving_average = 0;
+			if (noise_amp > 0.45) /*Prevent checking for duty cycle variation and iterating if m >= 1 */
 				num_samples_moving_average = 0;
 		#ifdef DEBUG_SQUARE_WAVE
 				snprintf(psys_command_1,COMMAND_LINELENGTH,"jitterhist %s 6 %s %.4e 0.50 %d y n %.4e\n",
