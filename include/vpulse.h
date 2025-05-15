@@ -8,8 +8,8 @@
 
 /*Add #defines for version number*/
 
-#define VERSION_NUMBER	2.22
-#define VERSION_DATE "4/10/2025"
+#define VERSION_NUMBER	2.23
+#define VERSION_DATE "5/15/2025"
 
 /*Add defines for debugging*/
 
@@ -61,6 +61,13 @@
 #define MINIMUM_INTERPOLATED_VALUE 0.0
 #define MAXIMUM_INTERPOLATED_VALUE 1.0
 
+#ifdef EXIT_CHARS
+	char exitchars[] = {'q','Q'};
+	int num_exitchars = sizeof(exitchars)/sizeof(exitchars[0]);
+#endif
+
+typedef enum { FALSE, TRUE } Boolean;
+
 typedef struct {
 	double x,y;
 	} xy_pair;
@@ -109,8 +116,10 @@ char * add_units_underscore(double value,int num_digits,char *suffix,char *pvalu
 void find_date(char *pdate_string,int max_characters);
 int find_timestamp(char *pdate_string,int max_characters);
 int yes_no(char *pstring,int *preturn_value);
-
+Boolean check_for_quit_characters(char *pline);
+void remove_whitespace(char *pstring);
 void remove_carriage_return(char *pline);
+
 int check_executable(char *pprogram_executable,char *preturn_string);
 int double_compare(const void* a, const void* b);
 int parsestring_to_doubles_array(char *pinput_string,double *pdoubles_array,int *parray_size,int max_array_size);
@@ -179,4 +188,4 @@ double s6 = 1.0/4.0;
 double pi;
 #endif
 
-#define PLOTTING_ROUTINES_DIR "/Users/sml/cproj/vpulse/vpulse_v2p22"
+#define PLOTTING_ROUTINES_DIR "/Users/sml/cproj/vpulse/vpulse_v2p23"
