@@ -117,7 +117,6 @@ ppsd_sppowr_path = &psd_sppowr_path[0];
 pyes_no_psd_string = &yes_no_psd_string[0];
 pyes_no_tie_string = &yes_no_tie_string[0];
 
-
 printf("\nvpulse v%.2f %s\n\n",VERSION_NUMBER,VERSION_DATE);
 
 if ((argc != 17) && (argc != 15) && (argc != 12) && (argc != 10))
@@ -127,7 +126,7 @@ if ((argc != 17) && (argc != 15) && (argc != 12) && (argc != 10))
 		printf("Argument %ld: %s\n",i,argv[i]);
 		} */
 	printf("Detected %d arguments for command line use of \"vpulse\"!\n\n",argc);
-	printf("If the waveform is not amplitude or phase modulated, 11 up to arguments are required.\n\n");
+	printf("If the waveform is not amplitude or phase modulated, up to 11 arguments are required.\n\n");
 	printf("Usage with command line:\nvpulse <input_square_wave_freq_hz> <initial_phase (degrees)>\n");
 	printf("<trise_per_cent_period> <tfall_per_cent_period> <duty_cycle_percent>\n");
 	printf("<vout RC filter bandwidth multiplier (0 for no bandlimiting)>\n");
@@ -144,76 +143,106 @@ if ((argc != 17) && (argc != 15) && (argc != 12) && (argc != 10))
 	printf("<noise_type (sinusoidal, gaussian, or uniform)> <noise_bandwidth_Hz>\n");
 	printf("<modulation_type (AM or PM)> <perform PSD analysis (y/n)> <perform TIE analysis (y/n)>\n\n");
 	
-	printf("You will be prompted for all inputs.\n\n");
+	printf("You will be prompted for all inputs or enter \"q\" or \"Q\" to exit.\n\n");
 	printf("Enter square wave freq (Hz):\n");
 	fgets(pinput_string,LINELENGTH,stdin);
+	if (check_for_quit_characters(pinput_string) == TRUE)
+	   exit(0);
 	remove_carriage_return(pinput_string);
 	freq_Hz = atof(pinput_string);
 	
 	printf("Enter initial phase (degrees):\n");
 	fgets(pinput_string,LINELENGTH,stdin);
+	if (check_for_quit_characters(pinput_string) == TRUE)
+	   exit(0);
 	remove_carriage_return(pinput_string);
 	init_phase_degrees = atof(pinput_string);
 	
 	printf("Enter rise time (percent of period):\n");
 	fgets(pinput_string,LINELENGTH,stdin);
+	if (check_for_quit_characters(pinput_string) == TRUE)
+	   exit(0);
 	remove_carriage_return(pinput_string);
 	ttran_rise_percent = atof(pinput_string);
 
 	printf("Enter fall time (percent of period):\n");
 	fgets(pinput_string,LINELENGTH,stdin);
+	if (check_for_quit_characters(pinput_string) == TRUE)
+	   exit(0);
 	remove_carriage_return(pinput_string);
 	ttran_fall_percent = atof(pinput_string);
 
 	printf("Enter duty cycle (percent of period):\n");
 	fgets(pinput_string,LINELENGTH,stdin);
+	if (check_for_quit_characters(pinput_string) == TRUE)
+	   exit(0);
 	remove_carriage_return(pinput_string);
 	duty_cycle_percent = atof(pinput_string);
 
 	printf("Enter vout RC filter frequency multiplier (enter 0 for no bandlimiting):\n");
 	fgets(pinput_string,LINELENGTH,stdin);
+	if (check_for_quit_characters(pinput_string) == TRUE)
+	   exit(0);
 	remove_carriage_return(pinput_string);
 	vout_bandwidth_multiplier = atof(pinput_string);
 	
 	printf("Enter number of points per period:\n");
 	fgets(pinput_string,LINELENGTH,stdin);
+	if (check_for_quit_characters(pinput_string) == TRUE)
+	   exit(0);
 	remove_carriage_return(pinput_string);
 	num_points_per_period = atol(pinput_string);
 
 	printf("Enter number of periods:\n");
 	fgets(pinput_string,LINELENGTH,stdin);
+	if (check_for_quit_characters(pinput_string) == TRUE)
+	   exit(0);
 	remove_carriage_return(pinput_string);
 	num_periods = atol(pinput_string);
 
 	printf("Enter the number of periods to plot:\n");
 	fgets(pinput_string,LINELENGTH,stdin);
+	if (check_for_quit_characters(pinput_string) == TRUE)
+	   exit(0);
 	remove_carriage_return(pinput_string);
 	num_periods_to_plot = atol(pinput_string);
 
 	printf("Enter noise amplitude (modulation index between 0.0 and less than 1.0):\n");
 	fgets(pinput_string,LINELENGTH,stdin);
+	if (check_for_quit_characters(pinput_string) == TRUE)
+	   exit(0);
 	remove_carriage_return(pinput_string);
 	noise_amp = atof(pinput_string);
 
 	printf("Enter noise amplitude location (filtered (f) or unfiltered (u)):\n");
 	fgets(pnoise_location_string,LINELENGTH,stdin);
+	if (check_for_quit_characters(pnoise_location_string) == TRUE)
+	   exit(0);
 	remove_carriage_return(pnoise_location_string);
 	
 	printf("Enter noise type (sinusoidal (s), gaussian (g), uniform) (u):\n");
 	fgets(pnoise_type_string,LINELENGTH,stdin);
+	if (check_for_quit_characters(pnoise_type_string) == TRUE)
+	   exit(0);
 	remove_carriage_return(pnoise_type_string);
 
 	printf("Enter noise bandwidth or frequency of sinusoidal noise (Hz):\n");
 	fgets(pinput_string,LINELENGTH,stdin);
+	if (check_for_quit_characters(pinput_string) == TRUE)
+	   exit(0);
 	remove_carriage_return(pinput_string);
 	noise_bandwidth_Hz = atof(pinput_string);
 	
 	printf("Enter modulation type (AM (a) or PM (p)):\n");
 	fgets(pmodulation_type_string,LINELENGTH,stdin);
+	if (check_for_quit_characters(pmodulation_type_string) == TRUE)
+	   exit(0);
 	remove_carriage_return(pmodulation_type_string);
 	
 	printf("Perform PSD analysis (y/n)?:\n");
 	fgets(pinput_string,LINELENGTH,stdin);
+	if (check_for_quit_characters(pinput_string) == TRUE)
+	   exit(0);
 	remove_carriage_return(pinput_string);
 	number_of_prompts = 1;
 	while ((yes_no(pinput_string,&yes_no_value) != EXIT_SUCCESS) && (number_of_prompts < MAX_NUMBER_OF_PROMPTS))
@@ -236,6 +265,8 @@ if ((argc != 17) && (argc != 15) && (argc != 12) && (argc != 10))
 
 	printf("Perform TIE analysis (y/n)?:\n");
 	fgets(pinput_string,LINELENGTH,stdin);
+	if (check_for_quit_characters(pinput_string) == TRUE)
+	   exit(0);
 	remove_carriage_return(pinput_string);
 	number_of_prompts = 1;
 	while ((yes_no(pinput_string,&yes_no_value) != EXIT_SUCCESS) && (number_of_prompts < MAX_NUMBER_OF_PROMPTS))
