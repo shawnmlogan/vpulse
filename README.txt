@@ -3,11 +3,7 @@
 Version 2.23 of the program is available as the compressed tar file “vpulse_v2p23_051525.tar.gz” and may be downloaded from the URL provided in reference [1].
 To install the program and create the executable “vpulse”, enter Example command line [3] in the directory in which you wish to locate the program.
 
-<<<<<<< HEAD
 $ tar -xvzf vpulse_v2p23_051525.tar.gz						Example command line [3]
-=======
-$ tar -xvzf vpulse_v2.23_051525.tar.gz						Example command line [3]
->>>>>>> 56920f7a78ccbf486ae5d96ae60547befd0c3467
 
 This will create a directory vpulse_v2p23 and extract its directory structure:
 
